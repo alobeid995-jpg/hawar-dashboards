@@ -1,30 +1,36 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Hawar International School · Student Affairs Dashboards</title>
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=5">
 </head><body>
-<section id="login" class="center">
-  <form id="loginForm" class="card" autocomplete="on">
+<section id="login" class="loginwrap">
+  <div class="loginhero">
     <div class="logo">✓</div>
-    <h1>Hawar International School</h1>
-    <p class="muted">Middle School Student Affairs</p>
-    <label>Username<input id="u" name="username" autocomplete="username" required autofocus></label>
+    <h2>Hawar International School</h2>
+    <p>Middle School Student Affairs</p>
+    <ul><li>Attendance register and analysis</li><li>Behavior &amp; discipline tracking</li><li>Secure, role-based access</li></ul>
+  </div>
+  <form id="loginForm" class="card" autocomplete="on">
+    <h1>Welcome back</h1>
+    <p class="muted">Sign in to open your dashboards.</p>
+    <label>Username<input id="u" name="username" autocomplete="username" autocapitalize="none" required autofocus></label>
     <label>Password<input id="p" name="password" type="password" autocomplete="current-password" required></label>
     <button class="primary" id="loginBtn">Sign in</button>
     <p id="loginErr" role="alert" class="err"></p>
   </form>
 </section>
-<div id="app" hidden>
-  <header class="bar">
-    <div class="brand"><span class="logo sm">✓</span><strong>Hawar MS · Student Affairs</strong></div>
-    <nav id="tabs"></nav>
-    <div class="who"><span id="who"></span><button id="logout">Sign out</button></div>
-  </header>
+<div id="app" class="shell" hidden>
+  <aside>
+    <div class="brand"><span class="logo sm">✓</span><div><strong>Hawar International School</strong><small>Middle School Student Affairs</small></div></div>
+    <nav id="tabs" aria-label="Dashboards"></nav>
+    <div class="user"><div><small>Signed in as</small><strong id="who"></strong></div><button id="logout">Sign out</button></div>
+  </aside>
   <main>
+    <section id="home" class="homepane" hidden></section>
     <iframe id="frame" title="Dashboard" sandbox="allow-scripts allow-same-origin allow-downloads allow-modals allow-forms" hidden></iframe>
     <section id="admin" class="adminpane" hidden></section>
   </main>
 </div>
-<script src="app.js?v=3"></script>
+<script src="app.js?v=5"></script>
 </body></html>

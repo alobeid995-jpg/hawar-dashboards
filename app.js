@@ -56,23 +56,34 @@ $('loginForm').addEventListener('submit',async e=>{
   }catch(x){err.textContent=(x&&x.message)||'Sign-in failed.';console.error(x);}
   finally{btn.disabled=false;}
 });
+const ICONS={home:'⌂',attendance:'▦',discipline:'⚑',admin:'⚙'};
+const BLURB={attendance:'Daily and monthly attendance sheets, absence reports, Excel exports and charts for every section.',discipline:'Log incidents and school actions, review the incident log, and get weekly summaries with charts.',admin:'Choose who can open each dashboard, add counselors and reset passwords.'};
 function startApp(){
   $('login').hidden=true;$('app').hidden=false;
   $('who').textContent=session.payload.name||session.user;
   const tabs=$('tabs');tabs.innerHTML='';
-  const items=Object.keys(session.payload.keys).filter(k=>NAMES[k]).map(k=>[k,NAMES[k]]);
+  const items=[['home','Home'],...Object.keys(session.payload.keys).filter(k=>NAMES[k]).map(k=>[k,NAMES[k]])];
   if(session.payload.admin)items.push(['admin','Manage Users']);
-  items.forEach(([k,label])=>{const b=document.createElement('button');b.textContent=label;b.dataset.tab=k;b.onclick=()=>show(k);tabs.append(b);});
-  if(items.length)show(items[0][0]);
+  items.forEach(([k,label])=>{const b=document.createElement('button');b.innerHTML='<span class="ic">'+ICONS[k]+'</span>'+esc(label);b.dataset.tab=k;b.onclick=()=>show(k);tabs.append(b);});
+  show(items.length>2||session.payload.admin?'home':items[1][0]);
+}
+function renderHome(){
+  const keys=Object.keys(session.payload.keys).filter(k=>NAMES[k]);
+  if(session.payload.admin)keys.push('admin');
+  const label=k=>k==='admin'?'Manage Users':NAMES[k];
+  $('home').innerHTML='<div class="hero"><small>Middle School · Student Affairs</small><h1>Welcome, '+esc(session.payload.name||session.user)+'</h1><p>Choose a dashboard to get started.</p></div>'+
+   '<div class="cards">'+keys.map(k=>'<article class="dcard"><span class="tile">'+ICONS[k]+'</span><h3>'+esc(label(k))+'</h3><p>'+BLURB[k]+'</p><button class="primary" data-open="'+k+'">Open</button></article>').join('')+'</div>';
+  document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>show(b.dataset.open));
 }
 async function show(k){
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.tab===k?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
-  const frame=$('frame'),adm=$('admin');
-  if(k==='admin'){frame.hidden=true;adm.hidden=false;renderAdmin();return;}
-  adm.hidden=true;frame.hidden=false;
+  const frame=$('frame'),adm=$('admin'),home=$('home');
+  frame.hidden=k==='home'||k==='admin';adm.hidden=k!=='admin';home.hidden=k!=='home';
+  if(k==='home'){renderHome();return;}
+  if(k==='admin'){renderAdmin();return;}
   try{frame.srcdoc=await dashboardHtml(k);}catch(e){frame.srcdoc='<p style="font:16px sans-serif;padding:20px">'+e.message+'</p>';}
 }
-$('logout').onclick=()=>{session=null;cache={};$('frame').srcdoc='';$('admin').innerHTML='';$('app').hidden=true;$('login').hidden=false;$('loginForm').reset();$('u').focus();};
+$('logout').onclick=()=>{session=null;cache={};$('frame').srcdoc='';$('admin').innerHTML='';$('home').innerHTML='';$('app').hidden=true;$('login').hidden=false;$('loginForm').reset();$('u').focus();};
 /* ---------- admin ---------- */
 let pending=null;
 function renderAdmin(){
