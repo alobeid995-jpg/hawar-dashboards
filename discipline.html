@@ -14,7 +14,7 @@ html.embed header{height:56px}
 .charts .panel .viz-pie{margin:14px 0 6px}.charts .panel.wide{grid-column:1/-1}.charts .panel .viz-pie svg{width:164px;height:164px}
 .charts .panel .bar-row:first-of-type{margin-top:18px}
 @media(max-width:760px){html.embed aside{padding:6px 12px}}
-</style><script>if(window.top!==window.self)document.documentElement.classList.add('embed')</script><script src="config.js"></script><script src="fb.bundle.js"></script></head><body>
+</style><script>if(window.top!==window.self)document.documentElement.classList.add('embed')</script><script src="config.js"></script><script src="fb.bundle.js"></script><style>.namebox{position:relative}.suggest{position:absolute;left:0;width:max(100%,380px);max-width:86vw;top:100%;z-index:30;background:#fff;border:1px solid var(--line,#cfe3d6);border-radius:12px;box-shadow:0 10px 28px rgba(16,47,42,.18);max-height:320px;overflow:auto;margin-top:4px}.sg-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #eef3f0;border-radius:0;background:#fff;padding:10px 12px;min-height:0;cursor:pointer}.sg-item:hover,.sg-item:focus{background:#eaf5ef}.sg-item strong{flex:1;white-space:normal;text-align:left;font-size:.92rem;color:#102f2a}.sg-item .muted,.sg-item .pill{white-space:nowrap;flex:none}.sg-empty{padding:12px;color:#5b6b64}.selbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#eaf5ef;border-radius:12px;padding:10px 14px;margin:0 0 10px}.selbar strong{font-size:1.05rem}.selbar button{margin-left:auto}</style></head><body>
 <aside><div class="brand"><span class="logo" aria-hidden="true">✓</span><div><strong>Hawar International School</strong><small>Middle School Student Affairs</small></div></div><nav aria-label="Dashboard navigation"><button data-tab="home">Overview</button><button data-tab="log">Incident Log</button><button data-tab="week">Weekly Summary</button></nav><small class="local">Edits and imports are saved to the shared database.</small></aside>
 <div class="shell"><header><span>Behavior and Discipline Dashboard</span><button id="importOpen">Import Excel</button></header><main><div id="content" aria-busy="true">Loading incident records…</div></main></div>
 <dialog id="editor" aria-labelledby="editTitle"><form id="recordForm"><div class="dialog-head"><h2 id="editTitle"></h2><button type="button" data-close="editor" aria-label="Close">✕</button></div><div id="recordFields" class="form-grid"></div><div class="actions"><button class="primary">Save Incident</button><button type="button" data-close="editor">Cancel</button></div></form></dialog>
@@ -849,8 +849,7 @@ function filters() {
   if(!actions.some(([value])=>value===disciplineCommittee)) actions.push([disciplineCommittee,disciplineCommittee]);
   const months=[...new Set(records.map(r=>r.date?.slice(0,7)).filter(Boolean))].sort().reverse();
   return '<section class="panel filters" aria-label="Filter incident records"><div class="controls">'+
-    '<label>Search by Name<input type="search" id="nameSearch" list="student-search-names" value="'+esc(nameDraft)+'"></label>'+
-    '<datalist id="student-search-names">'+options(fieldOptions('name','').slice(1),null)+'</datalist>'+
+    '<label class="namebox">Search by Name<input type="search" id="nameSearch" autocomplete="off" placeholder="Type 3 letters of the name" value="'+esc(nameDraft)+'"><div id="nameSuggest" class="suggest" hidden></div></label>'+
     dropdown('Month','month',months.map(m=>[m,m]))+dropdown('Section','grade',list('grade'))+
     dropdown('Infraction','violation',list('violation',true))+dropdown('Action','action',actions)+
     dropdown('Data Quality','quality',[['missing','Missing Information']])+
@@ -901,9 +900,12 @@ function table() {
     const message=searching?'No incidents match “'+esc(filter.query)+'” with the current filters.':'Change the filters or add an incident.';
     const link=searching&&hasUnlinkedRecords()?
       '<p class="muted">Some incidents still use student codes. Choose the original workbook with the Behavior Record sheet, then select Update Dropdowns.</p>'+btn('Import Excel','link-names'):'';
+    const sel=selectedStudent();
+    if(sel)return '<div class="empty" role="status"><h3>'+esc(sel.name)+'</h3><p class="muted">'+(sel.group?esc(sel.group)+' · ':'')+'No incidents recorded for this student.</p>'+btn('+ Add incident for this student','new-for','primary')+'</div>';
     return '<div class="empty" role="status"><h3>No matching records</h3><p class="muted">'+message+'</p>'+link+'</div>';
   }
-  return '<p class="text-count muted" aria-live="polite">'+n.format(rows.length)+' records</p><div class="table-wrap" tabindex="0" aria-label="Incident records table"><table class="wide-table"><thead><tr><th>Date</th><th>Student and Section</th><th>Infraction</th><th>School Action</th><th>Record</th></tr></thead><tbody>'+
+  const selS=selectedStudent();
+  return (selS?'<div class="selbar"><strong>'+esc(selS.name)+'</strong>'+(selS.group?'<span class="muted">'+esc(selS.group)+'</span>':'')+btn('+ Add incident for this student','new-for','primary')+'</div>':'')+'<p class="text-count muted" aria-live="polite">'+n.format(rows.length)+' records</p><div class="table-wrap" tabindex="0" aria-label="Incident records table"><table class="wide-table"><thead><tr><th>Date</th><th>Student and Section</th><th>Infraction</th><th>School Action</th><th>Record</th></tr></thead><tbody>'+
     rows.map(r=>'<tr><td><time>'+showDate(r.date)+'</time></td><td><strong>'+esc(displayName(r.name)||'Unspecified')+'</strong><br><span class="muted">'+esc(r.grade||'Unspecified')+'</span></td><td>'+esc(translate(r.violation))+'</td><td>'+esc(translate(r.action))+
       (needsData(r).length?'<br><span class="pill amber">'+n.format(needsData(r).length)+' fields missing</span>':'')+'</td><td>'+btn('View and Edit','edit:'+r.id)+'</td></tr>').join('')+'</tbody></table></div>';
 }
@@ -936,11 +938,11 @@ function rosterId(name) {
   const ids=workbookOptions.studentIds;
   return ids && Object.hasOwn(ids,name) ? ids[name] : '';
 }
-function editor(record) {
+function editor(record,prefill) {
   editId=record?.id;
   $('editTitle').textContent=record?'Edit Incident':'Add Incident';
   $('recordFields').innerHTML=definitions.filter(([field])=>record || field!=='sid').map(([field,label,type])=>{
-    const storedValue=field==='sid' ? record?.sid || rosterId(record?.name) : record?.[field]??(field==='date'&&!record?today:'');
+    const storedValue=field==='sid' ? record?.sid || rosterId(record?.name) : record?.[field]??(prefill&&field==='name'?prefill.name:prefill&&field==='grade'&&prefill.group?prefill.group:(field==='date'&&!record?today:''));
     const required=!record && ['name','grade','violation','date'].includes(field)?' required':'';
     const control=type==='id' ? '<input name="sid" type="text" value="'+esc(storedValue)+'">' : type==='date' ?
       '<input name="'+field+'" type="date" value="'+esc(storedValue)+'"'+required+'>' :
@@ -1089,6 +1091,39 @@ async function resolveSeedNames(incidents) {
   for(const code of conflicts)names.delete(code);
   return names.size?Object.fromEntries(names):null;
 }
+
+let rosterList=[];
+function studentPool(){
+  const map=new Map();
+  const add=(name,group)=>{name=String(name||'').trim();if(!name)return;const k=searchText(name);if(!k)return;const cur=map.get(k);if(!cur)map.set(k,{name,group:group||'',key:k});else if(!cur.group&&group)cur.group=group;};
+  rosterList.forEach(x=>add(x.name,x.group));
+  [...(workbookOptions.students||[]),...(ownerRoster.students||[])].forEach(x=>add(fullName(x)));
+  records.forEach(r=>{const nm=fullName(r.name);if(nm)add(nm,r.grade);});
+  return [...map.values()];
+}
+function suggestStudents(q){
+  const words=searchText(q).split(' ').filter(Boolean);
+  if(!words.length||searchText(q).replace(/ /g,'').length<3)return [];
+  const pool=studentPool();
+  const pref=pool.filter(p=>{const nw=p.key.split(' ');return words.every(w=>nw.some(x=>x.startsWith(w)));});
+  const list=pref.length?pref:pool.filter(p=>words.every(w=>p.key.includes(w)));
+  return list.sort((a,b)=>(b.key.startsWith(words[0])-a.key.startsWith(words[0]))||a.name.localeCompare(b.name,'en')).slice(0,40);
+}
+function incidentCount(p){return records.filter(r=>searchText(fullName(r.name))===p.key||searchText(fullName(r.involved))===p.key).length;}
+function showSuggest(){
+  const box=$('nameSuggest');if(!box)return;
+  const list=suggestStudents(nameDraft);
+  if(!list.length){box.hidden=true;box.innerHTML=nameDraft.trim().length>=3&&searchText(nameDraft).length>=3?'':'';if(nameDraft.trim().length>=3&&searchText(nameDraft).length>=3){box.innerHTML='<div class="sg-empty">No student found with this name.</div>';box.hidden=false;}return;}
+  box.innerHTML=list.map((p,i)=>{const c=incidentCount(p);return '<button type="button" class="sg-item" data-sg="'+i+'"><strong>'+esc(p.name)+'</strong><span class="muted">'+esc(p.group||'')+'</span><span class="pill '+(c?'amber':'')+'">'+(c?n.format(c)+' incident'+(c===1?'':'s'):'No incidents')+'</span></button>';}).join('');
+  box._list=list;box.hidden=false;
+}
+function pickStudent(p){
+  nameDraft=p.name;filter.query=p.name;tab='log';draw();
+}
+function selectedStudent(){
+  const q=searchText(filter.query);if(!q)return null;
+  return studentPool().find(p=>p.key===q)||null;
+}
 function submitNameSearch() {
   filter.query=nameDraft.trim();
   tab='log';
@@ -1103,7 +1138,7 @@ document.addEventListener('keydown',event=>{
 });
 document.addEventListener('input',event=>{
   const el=event.target;
-  if(el.id==='nameSearch')nameDraft=el.value;
+  if(el.id==='nameSearch'){nameDraft=el.value;showSuggest();}
   if(el.dataset.filter){filter[el.dataset.filter]=el.value;$('result').innerHTML=tab==='log'?table():overview();}
   if(el.id==='weekDate' && el.value){weekDay=el.value;$('result').textContent=summary();}
 });
@@ -1114,6 +1149,9 @@ $('recordForm').addEventListener('change',event=>{
   event.currentTarget.elements.sid.value=(previous?.name===selectedName&&previous.sid)||rosterId(selectedName);
 });
 document.addEventListener('click',async event=>{
+  const sg=event.target.closest('.sg-item');
+  if(sg){const box=$('nameSuggest');const p=box&&box._list&&box._list[Number(sg.dataset.sg)];if(p)pickStudent(p);return;}
+  if(!event.target.closest('.namebox')){const b=$('nameSuggest');if(b)b.hidden=true;}
   const button=event.target.closest('button');
   if(!button)return;
   if(button.dataset.close)$(button.dataset.close).close();
@@ -1121,6 +1159,7 @@ document.addEventListener('click',async event=>{
   if(button.dataset.tab){tab=button.dataset.tab;draw();}
   const action=button.dataset.act||'';
   if(action==='new')editor();
+  if(action==='new-for'){const p=selectedStudent();editor(null,p);}
   if(action.startsWith('edit:'))editor(records.find(r=>r.id===action.slice(5)));
   if(action==='search')submitNameSearch();
   if(action==='link-names')$('importOpen').click();
@@ -1177,6 +1216,15 @@ $('importForm').addEventListener('submit',async event=>{
     if(!FB.auth.currentUser){$('content').textContent='Please sign in from the main page to open this dashboard.';return;}
     const d=await FB.loadDiscipline();
     records=d.records;source=d.source;workbookOptions=d.catalog;defaultOptions=d.options;
+    try{
+      rosterList=await FB.loadRosterNames();
+      const p=FB.profile&&FB.profile();
+      if(rosterList.length&&p&&p.admin){
+        const have=new Set((workbookOptions.students||[]).map(x=>searchText(fullName(x))));
+        const missing=rosterList.filter(x=>!have.has(searchText(x.name)));
+        if(missing.length){workbookOptions={...workbookOptions,students:[...(workbookOptions.students||[]),...missing.map(x=>x.name)]};FB.persistDiscipline(records,records,source,workbookOptions).catch(()=>{});}
+      }
+    }catch(e){console.warn(e);}
     ready=true;
     draw();
     FB.listenIncidents(list=>{
