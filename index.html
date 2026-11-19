@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Hawar International School · Student Affairs Dashboards</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<section id="login" class="center">
+  <form id="loginForm" class="card" autocomplete="on">
+    <div class="logo">✓</div>
+    <h1>Hawar International School</h1>
+    <p class="muted">Middle School Student Affairs</p>
+    <label>Username<input id="u" name="username" autocomplete="username" required autofocus></label>
+    <label>Password<input id="p" name="password" type="password" autocomplete="current-password" required></label>
+    <button class="primary" id="loginBtn">Sign in</button>
+    <p id="loginErr" role="alert" class="err"></p>
+  </form>
+</section>
+<div id="app" hidden>
+  <header class="bar">
+    <div class="brand"><span class="logo sm">✓</span><strong>Hawar MS · Student Affairs</strong></div>
+    <nav id="tabs"></nav>
+    <div class="who"><span id="who"></span><button id="logout">Sign out</button></div>
+  </header>
+  <main>
+    <iframe id="frame" title="Dashboard" sandbox="allow-scripts allow-same-origin allow-downloads allow-modals allow-forms" hidden></iframe>
+    <section id="admin" class="adminpane" hidden></section>
+  </main>
+</div>
+<script src="app.js"></script>
+</body></html>
