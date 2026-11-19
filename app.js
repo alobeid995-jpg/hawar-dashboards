@@ -60,7 +60,7 @@ const ICONS={home:'⌂',attendance:'▦',discipline:'⚑',admin:'⚙'};
 const BLURB={attendance:'Daily and monthly attendance sheets, absence reports, Excel exports and charts for every section.',discipline:'Log incidents and school actions, review the incident log, and get weekly summaries with charts.',admin:'Choose who can open each dashboard, add counselors and reset passwords.'};
 function startApp(){
   $('login').hidden=true;$('app').hidden=false;
-  $('who').textContent=session.payload.name||session.user;
+  $('who').textContent=session.payload.name||session.user;$('role').textContent=session.payload.title||'';
   const tabs=$('tabs');tabs.innerHTML='';
   const items=[['home','Home'],...Object.keys(session.payload.keys).filter(k=>NAMES[k]).map(k=>[k,NAMES[k]])];
   if(session.payload.admin)items.push(['admin','Manage Users']);
@@ -71,7 +71,7 @@ function renderHome(){
   const keys=Object.keys(session.payload.keys).filter(k=>NAMES[k]);
   if(session.payload.admin)keys.push('admin');
   const label=k=>k==='admin'?'Manage Users':NAMES[k];
-  $('home').innerHTML='<div class="hero"><small>Middle School · Student Affairs</small><h1>Welcome, '+esc(session.payload.name||session.user)+'</h1><p>Choose a dashboard to get started.</p></div>'+
+  $('home').innerHTML='<div class="hero"><small>Middle School · Student Affairs</small><h1>Welcome, '+esc(session.payload.name||session.user)+'</h1><p>'+(session.payload.title?esc(session.payload.title)+' · ':'')+'Choose a dashboard to get started.</p></div>'+
    '<div class="cards">'+keys.map(k=>'<article class="dcard"><span class="tile">'+ICONS[k]+'</span><h3>'+esc(label(k))+'</h3><p>'+BLURB[k]+'</p><button class="primary" data-open="'+k+'">Open</button></article>').join('')+'</div>';
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>show(b.dataset.open));
 }
