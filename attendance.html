@@ -91,6 +91,14 @@ th:first-child{background:#fff}
 #absence-download,#absence-save{background:#126251;border-color:#126251}
 .mark{border-radius:6px}
 body.embedded .hero{margin-top:0}
+
+.rangepanel{margin:0 0 .85rem;padding:22px;background:white;border:1px solid var(--line);border-radius:15px}
+.range-tools{display:flex;align-items:end;gap:.65rem;flex-wrap:wrap;margin:.7rem 0}.range-tools label{flex:1 1 150px}
+.range-sum{display:flex;gap:.6rem;flex-wrap:wrap;margin:.4rem 0 .8rem}.range-sum>div{flex:1 1 130px;background:#f4faf6;border-radius:12px;padding:.55rem .8rem;display:grid}.range-sum span{font-size:.8rem;color:#4e6072}.range-sum strong{font-size:1.4rem;color:#126251}
+.range-grid{max-height:68vh;border:1px solid var(--line);border-radius:10px}.range-grid td,.range-grid th{min-width:42px}.range-grid th.sumcol,.range-grid td.sumcol{background:#f4faf6;font-weight:700;border-left:2px solid #cfe3d6;min-width:50px}
+.range-grid th:first-child{min-width:190px}.range-grid .rname{font-weight:600}.range-grid tfoot th,.range-grid tfoot td{position:sticky;bottom:0;background:#e9f5ee;z-index:2;font-weight:700}.range-grid tfoot th:first-child{z-index:3}
+#range-toggle{background:#fff;border-color:#126251;color:#126251;font-weight:600}#range-toggle[aria-expanded=true]{background:#126251;color:#fff}
+@media print{body.print-range header,body.print-range .filters,body.print-range #analytics-panel,body.print-range .sheet,body.print-range #profile,body.print-range .range-tools,body.print-range #message{display:none!important}body.print-range .range-grid{max-height:none;overflow:visible}body.print-range .rangepanel{border:0;padding:0}}
 </style><script src="config.js"></script><script src="fb.bundle.js"></script>
 </head>
 <body>
@@ -122,6 +130,7 @@ body.embedded .hero{margin-top:0}
         <button id="excel-absence" type="button">Absence Report</button>
       </div>
     </details>
+    <button id="range-toggle" type="button" aria-expanded="false" aria-controls="range-panel">Period report</button>
     <button id="analytics-toggle" type="button" aria-expanded="false" aria-controls="analytics-panel">Analytics</button>
   </div>
   <dialog id="absence-dialog" aria-labelledby="absence-title">
@@ -143,6 +152,18 @@ body.embedded .hero{margin-top:0}
     </form>
   </dialog>
   <p id="message" role="status" hidden></p>
+  <section id="range-panel" class="rangepanel" hidden aria-labelledby="range-title">
+    <div class="heading"><h2 id="range-title">Period report</h2><span id="range-scope" class="muted"></span></div>
+    <div class="range-tools">
+      <label>From<input id="range-from" type="date" min="2026-08-01" max="2027-07-31"></label>
+      <label>To<input id="range-to" type="date" min="2026-08-01" max="2027-07-31"></label>
+      <label>Section<select id="range-group"></select></label>
+      <label>Student<input id="range-search" type="search" placeholder="Search by name"></label>
+      <button id="range-print" type="button">Print / Save PDF</button>
+    </div>
+    <div id="range-sum" class="range-sum"></div>
+    <div id="range-grid" class="grid range-grid"><table><thead id="range-head"></thead><tbody id="range-body"></tbody><tfoot id="range-foot"></tfoot></table></div>
+  </section>
   <section id="analytics-panel" class="analytics" aria-labelledby="analytics-title" hidden>
     <div class="heading"><h2 id="analytics-title">Attendance Analysis</h2><span id="analytics-scope"></span></div>
     <div class="metrics">
@@ -836,6 +857,67 @@ el('backup').onclick=()=>saveFile(JSON.stringify(state),'Hawar_Attendance_Backup
   }
   renderSheet();
  });}catch(e){console.error(e);}
+})();
+
+/* ===== Period report: all days between two dates on one page ===== */
+function rangeStudents(from,to){
+ const map=new Map();
+ months.filter(m=>m>=from.slice(0,7)&&m<=to.slice(0,7)).forEach(m=>roster(m).forEach(s=>map.set(s.id,s)));
+ const g=el('range-group').value,q=normalize(el('range-search').value);
+ return [...map.values()].filter(s=>(!g||s.group===g)&&normalize(s.name).includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function renderRange(){
+ const from=el('range-from').value,to=el('range-to').value;
+ const head=el('range-head'),body=el('range-body'),foot=el('range-foot'),sum=el('range-sum');
+ head.replaceChildren();body.replaceChildren();foot.replaceChildren();sum.replaceChildren();
+ if(!from||!to||from>to){el('range-scope').textContent='Choose a valid From and To date.';return;}
+ const now=today();
+ const cols=[];
+ for(let t=Date.parse(from+'T00:00:00Z');t<=Date.parse(to+'T00:00:00Z');t+=864e5){
+  const d=new Date(t).toISOString().slice(0,10);
+  if(day(d).style==='school'&&d<=now)cols.push(d);
+ }
+ const students=rangeStudents(from,to);
+ el('range-scope').textContent=shortDate.format(new Date(from))+' → '+shortDate.format(new Date(to))+' · '+cols.length+' school days · '+students.length+' students';
+ if(!cols.length){body.append(Object.assign(node('tr'),{}));const r=body.lastChild;const c=node('td','No school days with attendance in this period.');c.style.textAlign='left';r.append(c);return;}
+ const tr=node('tr');
+ const h0=node('th','Student');tr.append(h0);
+ cols.forEach(d=>{const th=node('th');th.append(weekday.format(new Date(d)));const s=node('small',shortDate.format(new Date(d)));th.append(s);tr.append(th);});
+ ['P','A','L','Other','Att. %'].forEach(l=>{const th=node('th',l);th.className='sumcol';tr.append(th);});
+ head.append(tr);
+ const dayTot=cols.map(()=>({P:0,A:0,L:0,O:0}));
+ const all={P:0,A:0,L:0,O:0};
+ students.forEach(s=>{
+  const r=node('tr');const th=node('th');const b=node('span',s.name);b.className='rname';th.append(b);th.append(node('small',' '+s.group));r.append(th);
+  const c={P:0,A:0,L:0,O:0};
+  cols.forEach((d,i)=>{
+   const code=state.marks[d]?.[s.id]||'';
+   const td=node('td');const m=node('span',code||'·');m.className='mark';m.dataset.code=code;td.title=(codes[code]||code||'Not recorded')+' · '+shortDate.format(new Date(d));td.append(m);r.append(td);
+   if(code){const k=code==='P'?'P':code==='L'?'L':code==='A'?'A':'O';c[k]++;dayTot[i][k]++;}
+  });
+  const rec=c.P+c.A+c.L+c.O,att=rec?Math.round((c.P+c.L)/rec*1000)/10:null;
+  [c.P,c.A,c.L,c.O,att===null?'—':att+'%'].forEach(v=>{const td=node('td',v);td.className='sumcol';r.append(td);});
+  Object.keys(all).forEach(k=>all[k]+=c[k]);
+  body.append(r);
+ });
+ const f=node('tr');f.append(Object.assign(node('th','Absent that day'),{}));
+ dayTot.forEach(t=>f.append(node('td',t.A+t.O||'')));
+ for(let i=0;i<5;i++)f.append(Object.assign(node('td'),{className:'sumcol'}));
+ foot.append(f);
+ const rec=all.P+all.A+all.L+all.O;
+ [['Attendance',rec?Math.round((all.P+all.L)/rec*1000)/10+'%':'—'],['Present',all.P],['Late',all.L],['Absent',all.A],['Excused / medical / other',all.O]].forEach(([l,v])=>{const d=node('div');d.append(node('span',l),node('strong',String(v)));sum.append(d);});
+}
+(function(){
+ const sel=el('range-group');
+ const fill=()=>{const g=new Set();Object.values(state.rosters).forEach(r=>Object.values(r).forEach(s=>g.add(s.group)));const cur=sel.value;sel.replaceChildren(option('','All Sections'),...[...g].sort().map(x=>option(x)));sel.value=[...g].includes(cur)?cur:'';};
+ el('range-toggle').onclick=()=>{
+  const p=el('range-panel');p.hidden=!p.hidden;el('range-toggle').setAttribute('aria-expanded',String(!p.hidden));
+  if(!p.hidden){fill();if(!el('range-from').value){const t=today();el('range-to').value=t<'2026-08-30'?'2026-08-30':t;el('range-from').value=el('range-to').value.slice(0,8)+'01';}renderRange();p.scrollIntoView({behavior:'smooth',block:'start'});}
+ };
+ ['range-from','range-to','range-group'].forEach(i=>el(i).onchange=renderRange);
+ el('range-search').oninput=renderRange;
+ el('range-print').onclick=()=>{document.body.classList.add('print-range');window.print();setTimeout(()=>document.body.classList.remove('print-range'),500);};
+ window.addEventListener('afterprint',()=>document.body.classList.remove('print-range'));
 })();
 </script>
 </body>
