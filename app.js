@@ -25,6 +25,13 @@ $('loginForm').addEventListener('submit',async e=>{
 });
 FB.onAuth.push((user,profile)=>{
   if(!user){me=null;loaded={};['attendance','discipline'].forEach(k=>{const f=$('frame-'+k);f.removeAttribute('src');f.hidden=true;});$('admin').innerHTML='';$('home').innerHTML='';$('app').hidden=true;$('login').hidden=false;return;}
+  if(!profile||profile.error||!profile.access){
+    $('login').hidden=true;$('app').hidden=false;$('tabs').innerHTML='';$('who').textContent=user.email||'';$('role').textContent='';
+    ['attendance','discipline','admin'].forEach(n=>{const e=$(n==='admin'?'admin':'frame-'+n);if(e)e.hidden=true;});
+    const h=$('home');h.hidden=false;
+    const code=profile&&profile.error?profile.error:'no-profile';
+    h.innerHTML='<h2>Could not load your account</h2><p class="muted">'+(/permission/.test(code)?'The database rules are not published yet, or this account has no access. If you are the administrator, publish the Firestore rules, then reload.':'No access has been set for this account yet. Ask the administrator.')+'</p><p class="muted small">Code: '+esc(code)+'</p>';
+    return;}
   me=profile;startApp();
 });
 FB.ready.then(user=>{ if(!user){$('login').hidden=false;} });
