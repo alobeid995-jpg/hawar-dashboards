@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const enc=new TextEncoder(),dec=new TextDecoder();
 const b2u=b64=>Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
 const u2b=u=>{let s='';u=new Uint8Array(u);for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);};
-const ITER=310000;
+const ITER=100000;
 const NAMES={attendance:'Attendance',discipline:'Behavior & Discipline'};
 let entries=[],session=null,cache={};
 async function pbkdf(password,salt,iter){
@@ -22,8 +22,10 @@ async function makeEntry(username,password,payload){
   return {user:username.toLowerCase(),salt:u2b(salt),iter:ITER,iv:u2b(iv),data:u2b(ct)};
 }
 async function loadEntries(){
-  const r=await fetch('users.json?'+Date.now(),{cache:'no-store'});
-  if(!r.ok)throw new Error('Could not load users.');
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),20000);
+  let r;try{r=await fetch('users.json?'+Date.now(),{cache:'no-store',signal:ctl.signal});}
+  catch{throw new Error('Could not reach the server. Check your connection and try again.');}finally{clearTimeout(t);}
+  if(!r.ok)throw new Error('Could not load users (HTTP '+r.status+').');
   entries=await r.json();
 }
 async function dashboardHtml(name){
@@ -38,9 +40,10 @@ async function dashboardHtml(name){
 $('loginForm').addEventListener('submit',async e=>{
   e.preventDefault();
   const btn=$('loginBtn'),err=$('loginErr');
-  btn.disabled=true;err.textContent='Signing in…';
+  btn.disabled=true;err.className='err';err.textContent='Loading…';
   try{
     await loadEntries();
+    err.textContent='Checking your password… (can take a few seconds)';
     const user=$('u').value.trim().toLowerCase(),pw=$('p').value;
     const entry=entries.find(x=>x.user===user);
     let payload=null;
@@ -50,7 +53,7 @@ $('loginForm').addEventListener('submit',async e=>{
     session={user,password:pw,payload};
     $('p').value='';err.textContent='';
     startApp();
-  }catch(x){err.textContent=x.message||'Sign-in failed.';}
+  }catch(x){err.textContent=(x&&x.message)||'Sign-in failed.';console.error(x);}
   finally{btn.disabled=false;}
 });
 function startApp(){
