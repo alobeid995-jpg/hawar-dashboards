@@ -24,7 +24,7 @@ nav button{display:flex;align-items:center;gap:10px;justify-content:flex-start;c
 nav button:hover,nav button[aria-current=page]{background:#245448;color:#fff}nav .ic{width:22px;text-align:center;opacity:.9}
 .user{margin-top:auto;border-top:1px solid #ffffff25;padding-top:16px;display:grid;gap:10px;font-size:13px;color:#bcd2c8}.user strong{display:block;color:#fff;font-size:15px;overflow-wrap:anywhere}
 .user button{background:transparent;color:#eef8f3;border-color:#ffffff40}.user button:hover{background:#245448}
-main{height:100dvh;overflow:auto;min-width:0}#frame{width:100%;height:100%;border:0;display:block;background:#f4f7f5}
+main{height:100dvh;overflow:auto;min-width:0}.dframe{width:100%;height:100%;border:0;display:block;background:#f4f7f5}
 .homepane,.adminpane{padding:30px 34px 50px;max-width:1100px;margin:auto}
 .hero{background:radial-gradient(ellipse at 10% 35%,#286e5e 0%,transparent 60%),#12473d;color:#fff;border-radius:20px;padding:34px;position:relative;overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;background:repeating-radial-gradient(ellipse at 0% 130%,transparent 0 29px,#ffffff12 30px 31px,transparent 32px 45px);mask-image:linear-gradient(to right,#000,transparent 55%);pointer-events:none}
@@ -42,5 +42,9 @@ table{width:100%;border-collapse:collapse}th,td{padding:11px;border-bottom:1px s
  .shell{display:block}aside{position:static;height:auto;padding:12px 14px;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
  .brand{padding:0;border:0}.brand small{display:none}nav{display:flex;margin:0;order:3;flex:1 1 100%;gap:4px;flex-wrap:nowrap;overflow-x:auto}nav button{width:auto;padding:8px 12px;font-size:14px;white-space:nowrap}.brand{flex:1}
  .user{margin:0;border:0;padding:0;display:flex;align-items:center;gap:10px}.user small{display:none}
- main{height:auto}#frame{height:calc(100dvh - 112px)}.homepane,.adminpane{padding:18px 14px}
+ main{height:auto}.dframe{height:calc(100dvh - 112px)}.homepane,.adminpane{padding:18px 14px}
 }
+
+.small{font-size:13px}.tag{display:inline-block;background:#eaf5ef;color:#126251;border-radius:20px;padding:2px 10px;font-size:13px;margin:2px 4px 2px 0}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;white-space:pre-wrap;background:#f4f7f5;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:260px;overflow:auto}
+.row.end{justify-content:flex-end}.danger{color:#9a301c}
