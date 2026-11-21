@@ -17,7 +17,7 @@ input,select,textarea{border:1px solid #b9cfc5;border-radius:9px;padding:.45rem 
 .tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:820px}th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--light);font-size:.82rem;color:var(--dark);position:sticky;top:0}
 tr.row{cursor:pointer}tr.row:hover{background:#f6fbf8}
 .pill{display:inline-block;border-radius:999px;padding:.15rem .6rem;font-size:.78rem;font-weight:700;background:#e9eeea;color:#42544d;white-space:nowrap}
-.pill.Pending{background:#fff0d8;color:#8a5200}.pill.Approved{background:#e1f3e7;color:#1d6a3a}.pill.Rejected{background:#fde4e4;color:#9a2630}.pill.Yes{background:#e2effb;color:#1d4f86}.pill.No{background:#eceff1;color:#4b5a62}
+.pill.formp{background:#efe9f8;color:#5a3d84}.pill.newb{background:#b4561b;color:#fff}.pill.Pending{background:#fff0d8;color:#8a5200}.pill.Approved{background:#e1f3e7;color:#1d6a3a}.pill.Rejected{background:#fde4e4;color:#9a2630}.pill.Yes{background:#e2effb;color:#1d4f86}.pill.No{background:#eceff1;color:#4b5a62}
 .clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:40ch}.muted{color:var(--muted)}.empty{padding:22px;text-align:center;color:var(--muted)}
 dialog{border:0;border-radius:18px;padding:0;width:min(680px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}dialog::backdrop{background:rgba(10,30,25,.5)}
 .dlg{padding:20px 22px;display:grid;gap:12px;max-height:90vh;overflow:auto}.dlg h2{font-size:1.25rem}.dlg label{display:grid;gap:4px;font-weight:600;font-size:.88rem}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -113,10 +113,12 @@ const APPROVAL=['Pending','Approved','Rejected'];
 const MODELS=['Mainstream','ESU'];
 const CONTACT=['Mother','Father','Guardian'];
 const METHODS=['Phone call','WhatsApp','In-person meeting','Email','Other'];
+const isNew=r=>r.source==='form'&&!r.reviewed;
+const badge=r=>r.source==='form'?' <span class="pill '+(isNew(r)?'newb':'formp')+'">'+(isNew(r)?'NEW · form':'form')+'</span>':'';
 const CFG={
- resit:{label:'Re-sit & Make-up Approvals',cols:[['date','Date of exam',r=>fmt(r.date)],['student','Student',r=>'<strong>'+esc(r.student)+'</strong><br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['subject','Subject',r=>esc(r.subject)+'<br><span class="muted">'+esc(r.teacher)+'</span>'],['reason','Reason of absence',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['approval','Approval',r=>'<span class="pill '+esc(r.approval)+'">'+esc(r.approval||'Pending')+'</span>'],['makeup','Make-up exam',r=>'<span class="pill '+esc(r.makeup||'No')+'">'+esc(r.makeup||'No')+'</span>']],
+ resit:{label:'Re-sit & Make-up Approvals',cols:[['date','Date of exam',r=>fmt(r.date)],['student','Student',r=>'<strong>'+esc(r.student)+'</strong>'+badge(r)+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['subject','Subject',r=>esc(r.subject)+'<br><span class="muted">'+esc(r.teacher)+'</span>'],['reason','Reason of absence',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['approval','Approval',r=>'<span class="pill '+esc(r.approval)+'">'+esc(r.approval||'Pending')+'</span>'],['makeup','Make-up exam',r=>'<span class="pill '+esc(r.makeup||'No')+'">'+esc(r.makeup||'No')+'</span>']],
   csv:['date','student','grade','model','subject','teacher','reason','approval','makeup'],csvH:['Date of Exam','Student Name','Class','Model of teaching','Subject','Teacher name','Reason of Absence','Approval Status','Make-up Exam']},
- parent:{label:'Parent Contacts',cols:[['date','Date',r=>fmt(r.date)+'<br><span class="muted">'+dow(r.date)+'</span>'],['student','Student',r=>'<strong>'+esc(r.student)+'</strong><br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['teacher','Teacher',r=>esc(r.teacher)],['contact','Contact',r=>esc(r.contact)+'<br><span class="muted">'+esc(r.method)+'</span>'],['reason','Reason for contact',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['outcome','Outcome and agreed action',r=>'<div class="clamp">'+esc(r.outcome)+'</div>']],
+ parent:{label:'Parent Contacts',cols:[['date','Date',r=>fmt(r.date)+'<br><span class="muted">'+dow(r.date)+'</span>'],['student','Student',r=>'<strong>'+esc(r.student)+'</strong>'+badge(r)+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['teacher','Teacher',r=>esc(r.teacher)],['contact','Contact',r=>esc(r.contact)+'<br><span class="muted">'+esc(r.method)+'</span>'],['reason','Reason for contact',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['outcome','Outcome and agreed action',r=>'<div class="clamp">'+esc(r.outcome)+'</div>']],
   csv:['date','day','student','grade','model','teacher','contact','method','reason','outcome'],csvH:['Date','Day','Student Name','Grade','Model of teaching','Teacher','Contact','Communication Method','Reason for contact','Outcome and agreed action']}
 };
 let all=[],tab='resit',filter={q:'',grade:'',extra:''},roster=[],canEdit=true,toastT,editing=null;
@@ -138,11 +140,11 @@ function draw(){
   let cards,charts;
   if(tab==='resit'){
     const p=L.filter(r=>r.approval==='Pending'||!r.approval).length,a=L.filter(r=>r.approval==='Approved').length,x=L.filter(r=>r.approval==='Rejected').length,mk=L.filter(r=>r.makeup==='Yes').length;
-    cards=[['Total requests',L.length],['Pending',p],['Approved',a],['Rejected',x],['Make-up exams',mk]];
+    cards=[['Total requests',L.length],['New from form',L.filter(isNew).length],['Pending',p],['Approved',a],['Rejected',x],['Make-up exams',mk]];
     charts=[['Approval status',pie(L.map(r=>({...r,approval:r.approval||'Pending'})),r=>r.approval,'requests')],['By subject',bars(L,r=>r.subject,'Requests')],['Reasons of absence',pie(L,r=>r.reason,'requests')],['By class',bars(L,r=>r.grade,'Requests','#3f7fb8')],['Requests per month',monthBars(L,'Requests')],['Make-up exam given?',pie(L,r=>r.makeup||'No','requests')]];
   }else{
     const st=new Set(L.map(r=>norm(r.student)));
-    cards=[['Total contacts',L.length],['Students contacted',st.size],['Teachers involved',new Set(L.map(r=>r.teacher).filter(Boolean)).size],['This month',L.filter(r=>(r.date||'').slice(0,7)===today().slice(0,7)).length]];
+    cards=[['Total contacts',L.length],['New from form',L.filter(isNew).length],['Students contacted',st.size],['Teachers involved',new Set(L.map(r=>r.teacher).filter(Boolean)).size],['This month',L.filter(r=>(r.date||'').slice(0,7)===today().slice(0,7)).length]];
     charts=[['Who was contacted',pie(L,r=>r.contact,'contacts')],['Communication method',pie(L,r=>r.method,'contacts')],['Contacts per month',monthBars(L,'Contacts')],['By teacher',bars(L,r=>r.teacher,'Contacts','#3f7fb8')],['By grade',bars(L,r=>r.grade,'Contacts')]];
   }
   const extraOpts=tab==='resit'?APPROVAL:CONTACT,extraLabel=tab==='resit'?'Approval':'Contact';
@@ -151,13 +153,14 @@ function draw(){
    '<section class="panel" style="margin-top:14px"><div class="filters"><label>Search by student<input id="fq" type="search" value="'+esc(filter.q)+'" placeholder="Type part of the name"></label>'+
    '<label>Class<select id="fg"><option value="">All</option>'+grades.map(g=>'<option'+(filter.grade===g?' selected':'')+'>'+esc(g)+'</option>').join('')+'</select></label>'+
    '<label>'+extraLabel+'<select id="fe"><option value="">All</option>'+extraOpts.map(g=>'<option'+(filter.extra===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'+
-   '<button class="btn" id="fclear">Clear</button><button class="btn" id="csv">⬇ Download (Excel)</button></div></section>'+
+   '<button class="btn" id="fclear">Clear</button>'+(L.some(isNew)?'<button class="btn primary" id="seeAll">Mark all as reviewed</button>':'')+'<button class="btn" id="csv">⬇ Download (Excel)</button></div></section>'+
    '<section class="panel"><div class="tablewrap">'+(rows.length?'<table><thead><tr>'+c.cols.map(x=>'<th>'+x[1]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr class="row" data-id="'+esc(r.id)+'">'+c.cols.map(x=>'<td>'+x[2](r)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p class="empty">'+(L.length?'No entries match.':'No entries yet. Use the green button above to add the first one.')+'</p>')+'</div></section>';
   $('main').removeAttribute('aria-busy');
   $('fq').oninput=e=>{filter.q=e.target.value;const p=e.target.selectionStart;draw();const x=$('fq');x.focus();x.setSelectionRange(p,p);};
   $('fg').onchange=e=>{filter.grade=e.target.value;draw();};$('fe').onchange=e=>{filter.extra=e.target.value;draw();};
   $('fclear').onclick=()=>{filter={q:'',grade:'',extra:''};draw();};
   $('csv').onclick=()=>download(rows);
+  if($('seeAll'))$('seeAll').onclick=async()=>{for(const r of L.filter(isNew))await FB.saveFollowup({...r,reviewed:true}).catch(console.error);toast('Marked as reviewed.');};
   document.querySelectorAll('tr.row').forEach(tr=>tr.onclick=()=>openForm(all.find(x=>x.id===tr.dataset.id)));
   $('dlTeachers').innerHTML=[...new Set(all.map(r=>r.teacher).filter(Boolean))].sort().map(t=>'<option value="'+esc(t)+'">').join('');
 }
@@ -199,6 +202,7 @@ $('form').addEventListener('submit',async e=>{
   e.preventDefault();const f=new FormData(e.target),rec={...(editing||{}),type:editing?editing.type:tab};
   for(const [k,v] of f.entries())rec[k]=String(v).trim();
   rec.student=rec.student.toUpperCase();
+  if(rec.source==='form')rec.reviewed=true;
   if(rec.type==='resit'&&rec.date&&!rec.model)rec.model='Mainstream';
   $('fSave').disabled=true;
   try{await FB.saveFollowup(rec);$('dlg').close();toast('Saved.');}catch(x){$('fErr').textContent='Could not save ('+(x.code||x.message)+').';}
