@@ -23,6 +23,13 @@ $('loginForm').addEventListener('submit',async e=>{
   catch(x){err.textContent=errText(x);console.error(x);}
   finally{btn.disabled=false;}
 });
+$('devLink').onclick=e=>{e.preventDefault();$('devBox').hidden=!$('devBox').hidden;if(!$('devBox').hidden)$('devEmail').focus();};
+$('devSend').onclick=async()=>{const m=$('devMsg'),em=$('devEmail').value.trim();if(!em){m.textContent='Enter your email.';return;}
+  $('devSend').disabled=true;m.className='small muted';m.textContent='Sending…';
+  try{await FB.devSendLink(em);m.textContent='If this email is registered, a sign-in link was sent. Open it on this device.';}
+  catch(x){m.className='small err';m.textContent=errText(x);console.error(x);}
+  finally{$('devSend').disabled=false;}};
+if(FB.devIsLink&&FB.devIsLink()){FB.devFinish(()=>prompt('Confirm your developer email to finish signing in:')).catch(x=>{$('login').hidden=false;$('loginErr').textContent=errText(x);console.error(x);});}
 FB.onAuth.push((user,profile)=>{
   if(!user){if(refUnsub){refUnsub();refUnsub=null;}if(repUnsub){repUnsub();repUnsub=null;}me=null;loaded={};['attendance','discipline','referrals','followups','reports'].forEach(k=>{const f=$('frame-'+k);f.removeAttribute('src');f.hidden=true;});$('admin').innerHTML='';$('home').innerHTML='';$('app').hidden=true;$('login').hidden=false;return;}
   if(!profile||profile.error||!profile.access){
@@ -51,7 +58,7 @@ function show(k){
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.tab===k?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
   ['attendance','discipline','referrals','followups','reports'].forEach(n=>{
     const f=$('frame-'+n);f.hidden=k!==n;
-    if(k===n&&!f.getAttribute('src'))f.src=n+'.html?v=17';
+    if(k===n&&!f.getAttribute('src'))f.src=n+'.html?v=18';
   });
   $('admin').hidden=k!=='admin';$('home').hidden=k!=='home';
   if(k==='home')renderHome();
@@ -72,7 +79,9 @@ const rulesText=()=>{const a=(window.HAWAR_CONFIG.adminEmail||'').toLowerCase();
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isAdmin() { return signedIn() && request.auth.token.email == '${a}'; }
+    function isDev() { return signedIn() && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/developers/$(request.auth.token.email)); }
+    function isAdmin() { return (signedIn() && request.auth.token.email == '${a}') || isDev(); }
     function can(area) {
       return isAdmin() || (signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -122,6 +131,10 @@ service cloud.firestore {
         && n.get('description','') is string && n.get('description','').size() <= 1500
         && n.get('actTalk',false) is bool && n.get('actParent',false) is bool
         && n.get('actOther','') is string && n.get('actOther','').size() <= 300;
+    }
+    match /developers/{e} {
+      allow read: if signedIn() && request.auth.token.email == e;
+      allow write: if false;
     }
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());

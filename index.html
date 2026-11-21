@@ -18,6 +18,12 @@
     <label>Password<input id="p" name="password" type="password" autocomplete="current-password" required></label>
     <button class="primary" id="loginBtn">Sign in</button>
     <p id="loginErr" role="alert" class="err"></p>
+    <p style="text-align:center;margin:14px 0 0"><a href="#" id="devLink" style="font-size:11px;color:#9aa3b2;text-decoration:none;opacity:.6">Developer</a></p>
+    <div id="devBox" hidden style="margin-top:8px;border-top:1px solid #e5e7eb;padding-top:10px">
+      <label>Developer email<input id="devEmail" type="email" autocapitalize="none" autocomplete="email"></label>
+      <button type="button" id="devSend" style="margin-top:8px">Send sign-in link</button>
+      <p id="devMsg" class="small muted" role="status"></p>
+    </div>
   </form>
 </section>
 <div id="app" class="shell" hidden>
@@ -36,7 +42,7 @@
     <section id="admin" class="adminpane" hidden></section>
   </main>
 </div>
-<script src="config.js"></script>
-<script src="fb.bundle.js"></script>
-<script src="app.js?v=17"></script>
+<script src="config.js?v=18"></script>
+<script src="fb.bundle.js?v=18"></script>
+<script src="app.js?v=18"></script>
 </body></html>
