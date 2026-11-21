@@ -1,9 +1,9 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const NAMES={attendance:'Attendance',discipline:'Behavior & Discipline'};
-const ICONS={home:'⌂',attendance:'▦',discipline:'⚑',admin:'⚙'};
-const BLURB={attendance:'Daily and monthly attendance sheets, absence reports, Excel exports and charts for every section.',discipline:'Log incidents and school actions, review the incident log, and get weekly summaries with charts.',admin:'Create accounts, choose who can open each dashboard, reset passwords and load starting data.'};
+const NAMES={attendance:'Attendance',discipline:'Behavior & Discipline',referrals:'Counselor Referrals'};
+const ICONS={home:'⌂',attendance:'▦',discipline:'⚑',referrals:'✉',admin:'⚙'};
+const BLURB={referrals:'Cases referred by the supervisor to the counselor, with feedback, follow-up status and new-case alerts.',attendance:'Daily and monthly attendance sheets, absence reports, Excel exports and charts for every section.',discipline:'Log incidents and school actions, review the incident log, and get weekly summaries with charts.',admin:'Create accounts, choose who can open each dashboard, reset passwords and load starting data.'};
 if(!window.FB){document.body.innerHTML='<p style="padding:30px;font:16px sans-serif">The sign-in service could not be loaded. Please refresh the page.</p>';throw new Error('FB missing');}
 let me=null,loaded={};
 const errText=e=>{
@@ -24,7 +24,7 @@ $('loginForm').addEventListener('submit',async e=>{
   finally{btn.disabled=false;}
 });
 FB.onAuth.push((user,profile)=>{
-  if(!user){me=null;loaded={};['attendance','discipline'].forEach(k=>{const f=$('frame-'+k);f.removeAttribute('src');f.hidden=true;});$('admin').innerHTML='';$('home').innerHTML='';$('app').hidden=true;$('login').hidden=false;return;}
+  if(!user){if(refUnsub){refUnsub();refUnsub=null;}me=null;loaded={};['attendance','discipline','referrals'].forEach(k=>{const f=$('frame-'+k);f.removeAttribute('src');f.hidden=true;});$('admin').innerHTML='';$('home').innerHTML='';$('app').hidden=true;$('login').hidden=false;return;}
   if(!profile||profile.error||!profile.access){
     $('login').hidden=true;$('app').hidden=false;$('tabs').innerHTML='';$('who').textContent=user.email||'';$('role').textContent='';
     ['attendance','discipline','admin'].forEach(n=>{const e=$(n==='admin'?'admin':'frame-'+n);if(e)e.hidden=true;});
@@ -45,10 +45,11 @@ function startApp(){
   if(me.admin)items.push(['admin','Manage Users']);
   items.forEach(([k,label])=>{const b=document.createElement('button');b.innerHTML='<span class="ic">'+ICONS[k]+'</span>'+esc(label);b.dataset.tab=k;b.onclick=()=>show(k);tabs.append(b);});
   show('home');
+  startReferralAlerts();
 }
 function show(k){
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.tab===k?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
-  ['attendance','discipline'].forEach(n=>{
+  ['attendance','discipline','referrals'].forEach(n=>{
     const f=$('frame-'+n);f.hidden=k!==n;
     if(k===n&&!f.getAttribute('src'))f.src=n+'.html';
   });
@@ -62,7 +63,8 @@ function renderHome(){
   let body;
   if(!keys.length)body='<div class="panel"><h3>No dashboards yet</h3><p class="muted">Your account is signed in, but no dashboard has been assigned to you. Please ask the administrator to give you access.</p></div>';
   else body='<div class="cards">'+keys.map(k=>'<article class="dcard"><span class="tile">'+ICONS[k]+'</span><h3>'+esc(label(k))+'</h3><p>'+BLURB[k]+'</p><button class="primary" data-open="'+k+'">Open</button></article>').join('')+'</div>';
-  $('home').innerHTML='<div class="hero"><small>Middle School · Student Affairs</small><h1>Welcome, '+esc(me.name||me.email)+'</h1><p>'+(me.title?esc(me.title)+' · ':'')+'Choose a dashboard to get started.</p></div>'+body;
+  const fr=window.__refFresh||0;
+  $('home').innerHTML=(fr&&!me.admin?'<div class="newref" data-open="referrals">✉ <strong>'+fr+' new referral'+(fr===1?'':'s')+'</strong> from the supervisor · click to open</div>':'')+'<div class="hero"><small>Middle School · Student Affairs</small><h1>Welcome, '+esc(me.name||me.email)+'</h1><p>'+(me.title?esc(me.title)+' · ':'')+'Choose a dashboard to get started.</p></div>'+body;
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>show(b.dataset.open));
 }
 /* ---------------- admin ---------------- */
@@ -84,6 +86,12 @@ service cloud.firestore {
     match /attendanceDays/{doc} { allow read, write: if can('attendance'); }
     match /incidents/{doc} { allow read, write: if can('discipline'); }
     match /disciplineMeta/{doc} { allow read, write: if can('discipline'); }
+    match /referrals/{id} {
+      allow read: if can('referrals') || can('discipline');
+      allow create, delete: if can('discipline');
+      allow update: if can('discipline') || (can('referrals')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['counselorFeedback','status','seen','seenAt','updatedAt']));
+    }
   }
 }`;};
 const genPw=()=>{const a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';const r=crypto.getRandomValues(new Uint8Array(14));return [...r].map(x=>a[x%a.length]).join('');};
@@ -95,7 +103,7 @@ async function renderAdmin(){
   const rows=users.sort((a,b)=>(a.email||'').localeCompare(b.email||'')).map(u=>{
     const own=(u.email||'').toLowerCase()===(me.email||'').toLowerCase();
     return '<tr data-uid="'+esc(u.uid)+'" data-email="'+esc(u.email)+'"><td><strong>'+esc(u.name||'')+'</strong><br><span class="muted small">'+esc(u.email||'')+(u.title?' · '+esc(u.title):'')+'</span></td>'+
-    '<td>'+(own?'<span class="tag">Administrator · all dashboards</span>':['attendance','discipline'].map(a=>'<label style="display:inline-flex;gap:6px;margin-inline-end:12px;align-items:center"><input type="checkbox" style="width:auto" data-a="'+a+'"'+((u.access||[]).includes(a)?' checked':'')+'> '+NAMES[a]+'</label>').join(''))+'</td>'+
+    '<td>'+(own?'<span class="tag">Administrator · all dashboards</span>':['attendance','discipline','referrals'].map(a=>'<label style="display:inline-flex;gap:6px;margin-inline-end:12px;align-items:center"><input type="checkbox" style="width:auto" data-a="'+a+'"'+((u.access||[]).includes(a)?' checked':'')+'> '+NAMES[a]+'</label>').join(''))+'</td>'+
     '<td>'+(own?'':'<button data-act="save">Save</button> <button data-act="reset">Send reset email</button> <button data-act="remove" class="danger">Remove access</button>')+'</td></tr>';
   }).join('');
   if(users.length||!$('ulist').querySelector('.err'))$('ulist').outerHTML='<table><thead><tr><th>User</th><th>Can open</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="3">No users yet.</td></tr>')+'</tbody></table><p id="umsg" class="err small"></p>';
@@ -104,17 +112,17 @@ async function renderAdmin(){
   '<div class="row"><label style="flex:1 1 200px;display:grid">Full name<input id="nn" required placeholder="e.g. Ms. Sara"></label><label style="flex:1 1 200px;display:grid">Title (optional)<input id="nt" placeholder="e.g. Counselor"></label></div>'+
   '<label style="display:grid">Email<input id="ne" type="email" required autocomplete="off" placeholder="name@example.com"></label>'+
   '<label style="display:grid">Password (at least 8 characters)<input id="np" type="text" minlength="8" required autocomplete="off"></label>'+
-  '<div class="row"><strong>Can open:</strong><label><input type="checkbox" id="ca" checked> Attendance</label><label><input type="checkbox" id="cd"> Behavior &amp; Discipline</label></div>'+
+  '<div class="row"><strong>Can open:</strong><label><input type="checkbox" id="ca" checked> Attendance</label><label><input type="checkbox" id="cd"> Behavior &amp; Discipline</label><label><input type="checkbox" id="cr"> Counselor Referrals</label></div>'+
   '<div class="row"><button class="primary" id="addBtn">Create account</button><button type="button" id="genpw">Generate password</button></div><p id="addMsg" class="err"></p></form>'+
   '<div class="panel"><h3 style="margin:0">Starting data</h3><p class="muted">Load the first records once into the database (files you keep private). Existing records with the same keys are replaced.</p>'+
-  '<div class="row"><label style="display:grid;gap:6px">Attendance file (attendance-seed.json)<input type="file" id="seedAtt" accept=".json"></label><label style="display:grid;gap:6px">Discipline file (discipline-seed.json)<input type="file" id="seedDis" accept=".json"></label></div><p id="seedMsg" class="small"></p></div>'+
+  '<div class="row"><label style="display:grid;gap:6px">Attendance file (attendance-seed.json)<input type="file" id="seedAtt" accept=".json"></label><label style="display:grid;gap:6px">Discipline file (discipline-seed.json)<input type="file" id="seedDis" accept=".json"></label><label style="display:grid;gap:6px">Referrals file (referrals-seed.json)<input type="file" id="seedRef" accept=".json"></label></div><p id="seedMsg" class="small"></p></div>'+
   '<div class="panel"><h3 style="margin:0">Security rules</h3><p class="muted">Paste these into Firebase → Firestore Database → Rules → Publish. They are what really stops a user from reading a dashboard they were not given.</p><div class="mono" id="rules"></div><div class="row"><button id="copyRules">Copy rules</button></div></div>');
   $('rules').textContent=rulesText();
   $('copyRules').onclick=async()=>{try{await navigator.clipboard.writeText(rulesText());$('copyRules').textContent='Copied';}catch{ }};
   $('genpw').onclick=()=>{$('np').value=genPw();};
   $('addForm').onsubmit=async e=>{
     e.preventDefault();
-    const access=[];if($('ca').checked)access.push('attendance');if($('cd').checked)access.push('discipline');
+    const access=[];if($('ca').checked)access.push('attendance');if($('cd').checked)access.push('discipline');if($('cr').checked)access.push('referrals');
     const msg=$('addMsg');msg.className='err';
     if(!access.length){msg.textContent='Choose at least one dashboard.';return;}
     $('addBtn').disabled=true;msg.textContent='Creating…';
@@ -145,4 +153,32 @@ async function renderAdmin(){
   };
   seed('seedAtt',FB.importAttendance,'attendance data');
   seed('seedDis',FB.importDiscipline,'discipline data');
+  seed('seedRef',FB.importReferrals,'referrals data');
+}
+
+/* ---------------- new-referral alerts (counselor) ---------------- */
+let refUnsub=null,refSeenIds=null;
+function startReferralAlerts(){
+  if(refUnsub){refUnsub();refUnsub=null;}refSeenIds=null;
+  if(!me||me.admin||!me.access.includes('referrals'))return;
+  refUnsub=FB.listenReferrals(list=>{
+    const fresh=list.filter(r=>r.seen===false&&r.status!=='Closed');
+    const btn=document.querySelector('#tabs button[data-tab="referrals"]');
+    if(btn){let b=btn.querySelector('.badge');if(!fresh.length){if(b)b.remove();}else{if(!b){b=document.createElement('span');b.className='badge';btn.append(b);}b.textContent=fresh.length;}}
+    const ids=new Set(fresh.map(r=>r.id));
+    if(refSeenIds){
+      const added=fresh.filter(r=>!refSeenIds.has(r.id));
+      if(added.length){
+        const msg=added.length===1?'New referral: '+added[0].name:added.length+' new referrals from the supervisor';
+        const t=document.createElement('div');t.className='alerttoast';t.innerHTML='✉ '+esc(msg);t.onclick=()=>{show('referrals');t.remove();};document.body.append(t);setTimeout(()=>t.remove(),9000);
+        try{if('Notification' in window&&Notification.permission==='granted')new Notification('Counselor Referrals',{body:msg});}catch{}
+      }
+    }else if(fresh.length){
+      const t=document.createElement('div');t.className='alerttoast';t.innerHTML='✉ You have '+fresh.length+' new referral'+(fresh.length===1?'':'s')+' from the supervisor';t.onclick=()=>{show('referrals');t.remove();};document.body.append(t);setTimeout(()=>t.remove(),9000);
+      try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();}catch{}
+    }
+    refSeenIds=ids;
+    window.__refFresh=fresh.length;
+    if(!$('home').hidden)renderHome();
+  },()=>{});
 }

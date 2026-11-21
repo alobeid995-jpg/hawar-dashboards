@@ -1,0 +1,216 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Counselor Referrals · Hawar International School</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#172d29;background:#f4f7f5;--green:#126251;--dark:#103b33;--line:#dde7e1;--muted:#526962;--light:#ecf5ef}
+*{box-sizing:border-box}body{margin:0;padding:22px 26px 60px}
+h1,h2,h3{margin:0}button,input,select,textarea{font:inherit;color:inherit}
+.hero{background:radial-gradient(ellipse at 10% 35%,#286e5e 0%,transparent 60%),#12473d;color:#fff;border-radius:20px;padding:28px 30px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.hero small{opacity:.8;font-weight:600}.hero h1{font-size:1.9rem;margin:.2rem 0}.hero p{margin:0;opacity:.85;max-width:60ch}
+.btn{border:1px solid #b9cfc5;background:#fff;border-radius:10px;padding:.5rem .9rem;cursor:pointer;font-weight:600;min-height:2.4rem}.btn:hover{background:var(--light)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.primary:hover{background:#0e5244}.btn.danger{color:#9a2630;border-color:#e0b4b8}
+.hero .btn{border-color:transparent;color:#103b33}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:16px 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px 16px}.card span{color:var(--muted);font-size:.85rem}.card strong{display:block;font-size:1.9rem;color:var(--green)}
+.card.new strong{color:#b4561b}
+.panel{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px 18px;margin:0 0 14px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}.charts .panel h3{font-size:1rem;margin-bottom:8px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.filters label{display:grid;gap:4px;font-weight:600;font-size:.88rem;flex:1 1 150px}
+input,select,textarea{border:1px solid #b9cfc5;border-radius:9px;padding:.45rem .6rem;background:#fff;min-height:2.3rem;width:100%}textarea{min-height:100px;resize:vertical}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:760px}th,td{text-align:left;padding:.65rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--light);font-size:.82rem;color:var(--dark);position:sticky;top:0}
+tr.row{cursor:pointer}tr.row:hover{background:#f6fbf8}
+.pill{display:inline-block;border-radius:999px;padding:.15rem .6rem;font-size:.78rem;font-weight:700;background:#e9eeea;color:#42544d;white-space:nowrap}
+.pill.Referred{background:#fff0d8;color:#8a5200}.pill.progress{background:#e2effb;color:#1d4f86}.pill.Closed{background:#e1f3e7;color:#1d6a3a}.pill.newb{background:#b4561b;color:#fff}.pill.type{background:#efe9f8;color:#5a3d84}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:46ch}
+.muted{color:var(--muted)}.empty{padding:22px;text-align:center;color:var(--muted)}
+dialog{border:0;border-radius:18px;padding:0;width:min(640px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}dialog::backdrop{background:rgba(10,30,25,.5)}
+.dlg{padding:20px 22px;display:grid;gap:12px}.dlg h2{font-size:1.25rem}.dlg label{display:grid;gap:4px;font-weight:600;font-size:.88rem}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.box{background:var(--light);border-radius:12px;padding:10px 12px;white-space:pre-wrap;font-weight:400}
+.actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px}.actions .left{margin-right:auto}
+.namebox{position:relative}.suggest{position:absolute;left:0;right:0;top:100%;z-index:20;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(16,47,42,.18);max-height:240px;overflow:auto;margin-top:3px}.sg{display:flex;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #eef3f0;background:#fff;padding:9px 12px;cursor:pointer}.sg:hover{background:#eaf5ef}.sg b{flex:1;font-weight:600}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#103b33;color:#fff;border-radius:12px;padding:.7rem 1.1rem;z-index:99;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.banner{background:#fff3e6;border:1px solid #f0c89a;color:#7a4300;border-radius:14px;padding:12px 16px;margin:14px 0 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.banner .btn{margin-left:auto}
+[hidden]{display:none!important}
+@media(max-width:760px){body{padding:14px}.charts{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.hero h1{font-size:1.5rem}}
+</style></head><body>
+<div class="hero"><div><small>Middle School · Boys Section</small><h1>Counselor Referrals</h1><p>Cases referred by the supervisor to the school counselor, with the counselor's feedback and follow-up status.</p></div><button class="btn" id="newBtn" hidden>＋ New referral</button></div>
+<div id="banner" class="banner" hidden></div>
+<main id="main" aria-busy="true"><p class="empty">Loading referrals…</p></main>
+<dialog id="detail"><div class="dlg" id="detailBody"></div></dialog>
+<dialog id="editor"><form class="dlg" id="newForm">
+<h2>New referral to counselor</h2>
+<label class="namebox">Student name<input name="name" id="nName" autocomplete="off" required placeholder="Type 3 letters of the name"><div id="nSuggest" class="suggest" hidden></div></label>
+<div class="grid2"><label>Class<input name="grade" required placeholder="e.g. 7B"></label><label>Model of teaching<select name="model"><option>Mainstream</option><option>ESU</option><option>Other</option></select></label></div>
+<div class="grid2"><label>Date of referral<input type="date" name="date" required></label><label>Case<select name="caseType"><option>New Case</option><option>Existing Case</option></select></label></div>
+<label>Supervisor comment<textarea name="supervisorComment" required placeholder="Why is the student being referred?"></textarea></label>
+<p id="newErr" class="muted" style="color:#9a2630;margin:0"></p>
+<div class="actions"><button type="button" class="btn" data-close="editor">Cancel</button><button class="btn primary" id="newSave">Refer to counselor</button></div></form></dialog>
+<div id="toast" hidden></div>
+<script>/* Shared SVG chart helpers: Viz.pie (donut + legend) and Viz.bars (vertical, grouped) */
+const Viz=(()=>{
+ const PAL=['#126251','#e0a526','#3f7fb8','#c24d5b','#7a5aa8','#2fa58a','#d9772b','#6b7f8c','#9ac34a','#b5517f'];
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const nf=new Intl.NumberFormat('en-GB',{maximumFractionDigits:1});
+ if(!document.getElementById('viz-css')){const st=document.createElement('style');st.id='viz-css';st.textContent=
+ '.viz-pie{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.viz-pie svg{width:176px;height:176px;flex:0 0 auto}'+
+ '.viz-legend{list-style:none;margin:0;padding:0;display:grid;gap:7px;flex:1 1 160px;min-width:0;font-size:14px}'+
+ '.viz-legend li{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center}.viz-legend i{width:12px;height:12px;border-radius:4px;display:block}'+
+ '.viz-legend span{overflow-wrap:anywhere}.viz-legend b{font-variant-numeric:tabular-nums;white-space:nowrap}.viz-legend em{font-style:normal;opacity:.65;font-weight:400}'+
+ '.viz-bars{overflow-x:auto;padding-bottom:4px}.viz-bars svg{display:block;min-width:100%;height:auto}'+
+ '.viz-key{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:0 0 6px}.viz-key span{display:inline-flex;gap:6px;align-items:center}.viz-key i{width:11px;height:11px;border-radius:3px;display:inline-block}'+
+ '.viz-empty{opacity:.7;margin:8px 0}.viz-title{font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;opacity:.65;margin:0 0 10px}'+
+ '.viz-pair{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}@media(max-width:820px){.viz-pair{grid-template-columns:1fr}}';
+ document.head.appendChild(st);}
+ /* items:[{label,value,color?}] */
+ function pie(items,o={}){
+  items=items.filter(i=>i.value>0);
+  const total=items.reduce((a,i)=>a+i.value,0);
+  if(!total)return '<p class="viz-empty">No data for this selection.</p>';
+  const R=62,C=2*Math.PI*R;let off=0;
+  const segs=items.map((it,k)=>{
+   const color=it.color||PAL[k%PAL.length],len=C*it.value/total;
+   const s='<circle cx="88" cy="88" r="'+R+'" fill="none" stroke="'+color+'" stroke-width="32" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 88 88)"><title>'+esc(it.label)+': '+nf.format(it.value)+' ('+nf.format(100*it.value/total)+'%)</title></circle>';
+   off+=len;it._c=color;return s;
+  }).join('');
+  const center=o.center??nf.format(total);
+  const svg='<svg viewBox="0 0 176 176" role="img" aria-label="Pie chart"><circle cx="88" cy="88" r="'+R+'" fill="none" stroke="#e6eee9" stroke-width="32"/>'+segs+
+   '<text x="88" y="86" text-anchor="middle" font-size="22" font-weight="700" fill="currentColor">'+esc(center)+'</text><text x="88" y="106" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">'+esc(o.centerLabel||'total')+'</text></svg>';
+  const legend='<ul class="viz-legend">'+items.map(it=>'<li><i style="background:'+it._c+'"></i><span>'+esc(it.label)+'</span><b>'+nf.format(it.value)+' <em>'+nf.format(100*it.value/total)+'%</em></b></li>').join('')+'</ul>';
+  return '<div class="viz-pie">'+svg+legend+'</div>';
+ }
+ /* labels:[..]; series:[{name,color,values:[..]}]; o:{fmt,max} */
+ function bars(labels,series,o={}){
+  const n=labels.length;
+  if(!n||!series.some(s=>s.values.some(v=>v>0)))return '<p class="viz-empty">No data for this selection.</p>';
+  const fmt=o.fmt||(v=>nf.format(v));
+  const max0=Math.max(...series.flatMap(s=>s.values),0);
+  const top=o.max||niceMax(max0);
+  let gw=Math.max(series.length*20+14,46),W=Math.max(320,n*gw+54),H=240,PL=44,PB=0,PT=22,ph=H-PB-PT;
+  const rot=n>7||labels.some(l=>String(l).length>9);
+  PB=rot?Math.min(14,Math.max(...labels.map(l=>String(l).length)))*5.6+26:40;ph=H-PB-PT;
+  let g='';
+  for(let t=0;t<=4;t++){const y=PT+ph-ph*t/4;g+='<line x1="'+PL+'" x2="'+(W-6)+'" y1="'+y+'" y2="'+y+'" stroke="#dbe6df" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">'+fmt(top*t/4)+'</text>';}
+  const slot=(W-PL-6)/n,bw=Math.min(26,(slot-8)/series.length);
+  let b='';
+  labels.forEach((lab,i)=>{
+   const cx=PL+slot*i+slot/2,x0=cx-bw*series.length/2;
+   series.forEach((s,k)=>{
+    const v=s.values[i]||0,h=ph*Math.min(v,top)/top,x=x0+k*bw,y=PT+ph-h;
+    b+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+(bw-2).toFixed(1)+'" height="'+Math.max(h,v>0?2:0).toFixed(1)+'" rx="4" fill="'+s.color+'"><title>'+esc(lab)+' · '+esc(s.name)+': '+fmt(v)+'</title></rect>';
+    if(series.length===1&&n<=16&&v>0)b+='<text x="'+(x+bw/2-1).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">'+fmt(v)+'</text>';
+   });
+   const text=String(lab),short=text.length>14?text.slice(0,13)+'…':text,ly=PT+ph+16;
+   b+=rot?'<text transform="translate('+cx.toFixed(1)+' '+ly+') rotate(-38)" text-anchor="end" font-size="11" fill="currentColor"><title>'+esc(text)+'</title>'+esc(short)+'</text>':'<text x="'+cx.toFixed(1)+'" y="'+ly+'" text-anchor="middle" font-size="11" fill="currentColor">'+esc(short)+'</text>';
+  });
+  const key=series.length>1?'<div class="viz-key">'+series.map(s=>'<span><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span>').join('')+'</div>':'';
+  return key+'<div class="viz-bars"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;min-width:'+W+'px;max-width:'+Math.round(W*1.4)+'px" role="img" aria-label="Bar chart">'+g+b+'</svg></div>';
+ }
+ function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v))),m=v/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;}
+ return {pie,bars,PAL,esc};
+})();
+</script>
+<script>if(window.top!==window.self)document.documentElement.classList.add('embed')</script><script src="config.js"></script><script src="fb.bundle.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=new Intl.NumberFormat('en-GB');
+const fmt=d=>{if(!d)return '';const x=new Date(d+'T00:00:00Z');return isNaN(x)?d:new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(x);};
+const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bahrain'}).format(new Date());
+const STAT=['Referred','In progress','Closed'];
+const norm=v=>String(v||'').normalize('NFKD').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+let list=[],me=null,canManage=false,canFeedback=false,filter={q:'',status:'',type:'',grade:''},roster=[],first=true,toastT;
+const toast=m=>{const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4500);};
+const pill=s=>'<span class="pill '+(s==='In progress'?'progress':esc(s))+'">'+esc(s||'Referred')+'</span>';
+const isNew=r=>r.seen===false&&r.status!=='Closed';
+function rows(){
+  const q=norm(filter.q).split(' ').filter(Boolean);
+  return list.filter(r=>(!filter.status||r.status===filter.status)&&(!filter.type||r.caseType===filter.type)&&(!filter.grade||r.grade===filter.grade)&&(!q.length||q.every(w=>norm(r.name).includes(w)))).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.ref||0)-(a.ref||0));
+}
+function draw(){
+  const total=list.length,n=list.filter(isNew).length;
+  const by=s=>list.filter(r=>r.status===s).length;
+  const grades=[...new Set(list.map(r=>r.grade).filter(Boolean))].sort();
+  const secCount={};list.forEach(r=>{const k=r.grade?('Grade '+r.grade[0]):'Unspecified';secCount[k]=(secCount[k]||0)+1;});
+  const monthCount={};list.forEach(r=>{const k=(r.date||'').slice(0,7);if(k)monthCount[k]=(monthCount[k]||0)+1;});
+  const ml=Object.keys(monthCount).sort();
+  const mname=m=>new Intl.DateTimeFormat('en-GB',{month:'short',year:'2-digit',timeZone:'UTC'}).format(new Date(m+'-01'));
+  const items=STAT.map(s=>({label:s,value:by(s)})).filter(i=>i.value);
+  const body=rows();
+  $('main').innerHTML=
+   '<div class="cards"><div class="card"><span>Total referrals</span><strong>'+nf.format(total)+'</strong></div>'+
+   '<div class="card new"><span>New (not yet seen)</span><strong>'+nf.format(n)+'</strong></div>'+
+   '<div class="card"><span>Referred · waiting</span><strong>'+nf.format(by('Referred'))+'</strong></div>'+
+   '<div class="card"><span>In progress</span><strong>'+nf.format(by('In progress'))+'</strong></div>'+
+   '<div class="card"><span>Closed</span><strong>'+nf.format(by('Closed'))+'</strong></div></div>'+
+   (total?'<div class="charts"><div class="panel"><h3>Referrals by status</h3>'+Viz.pie(items,{centerLabel:'referrals'})+'</div>'+
+   '<div class="panel"><h3>Referrals per month</h3>'+Viz.bars(ml.map(mname),[{name:'Referrals',color:'#126251',values:ml.map(m=>monthCount[m])}])+'</div>'+
+   '<div class="panel"><h3>Referrals by grade</h3>'+Viz.pie(Object.entries(secCount).map(([label,value])=>({label,value})),{centerLabel:'referrals'})+'</div>'+
+   '<div class="panel"><h3>New vs existing cases</h3>'+Viz.bars(['New case','Existing case'],[{name:'Cases',color:'#3f7fb8',values:[list.filter(r=>r.caseType==='New Case').length,list.filter(r=>r.caseType==='Existing Case').length]}])+'</div></div>':'')+
+   '<section class="panel" style="margin-top:14px"><div class="filters"><label>Search by name<input id="fq" type="search" value="'+esc(filter.q)+'" placeholder="Type part of the name"></label>'+
+   '<label>Status<select id="fs"><option value="">All</option>'+STAT.map(s=>'<option'+(filter.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+   '<label>Case<select id="ft"><option value="">All</option>'+['New Case','Existing Case'].map(s=>'<option'+(filter.type===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+   '<label>Class<select id="fg"><option value="">All</option>'+grades.map(s=>'<option'+(filter.grade===s?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select></label>'+
+   '<button class="btn" id="fclear">Clear</button>'+(canFeedback&&n?'<button class="btn primary" id="seeAll">Mark all as seen</button>':'')+'</div></section>'+
+   '<section class="panel"><div class="tablewrap">'+(body.length?'<table><thead><tr><th>Date</th><th>Student</th><th>Case</th><th>Supervisor comment</th><th>Counselor feedback</th><th>Status</th></tr></thead><tbody>'+
+   body.map(r=>'<tr class="row" data-id="'+esc(r.id)+'"><td>'+fmt(r.date)+'</td><td><strong>'+esc(r.name)+'</strong> '+(isNew(r)?'<span class="pill newb">NEW</span>':'')+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span></td><td><span class="pill type">'+esc(r.caseType||'')+'</span></td><td><div class="clamp">'+esc(r.supervisorComment)+'</div></td><td><div class="clamp">'+(r.counselorFeedback?esc(r.counselorFeedback):'<span class="muted">—</span>')+'</div></td><td>'+pill(r.status)+'</td></tr>').join('')+'</tbody></table>':'<p class="empty">No referrals match.</p>')+'</div></section>';
+  $('main').removeAttribute('aria-busy');
+  const fq=$('fq');
+  fq.oninput=e=>{filter.q=e.target.value;const pos=e.target.selectionStart;draw();const x=$('fq');x.focus();x.setSelectionRange(pos,pos);};
+  $('fs').onchange=e=>{filter.status=e.target.value;draw();};$('ft').onchange=e=>{filter.type=e.target.value;draw();};$('fg').onchange=e=>{filter.grade=e.target.value;draw();};
+  $('fclear').onclick=()=>{filter={q:'',status:'',type:'',grade:''};draw();};
+  if($('seeAll'))$('seeAll').onclick=async()=>{for(const r of list.filter(isNew))await FB.updateReferral(r.id,{seen:true,seenAt:Date.now()}).catch(console.error);toast('Marked as seen.');};
+  document.querySelectorAll('tr.row').forEach(tr=>tr.onclick=()=>openDetail(tr.dataset.id));
+  const bn=$('banner');
+  if(canFeedback&&n){bn.hidden=false;bn.innerHTML='<strong>'+nf.format(n)+' new referral'+(n===1?'':'s')+' from the supervisor</strong><span>Open a case to read it and add your feedback.</span>';}else bn.hidden=true;
+}
+function openDetail(id){
+  const r=list.find(x=>x.id===id);if(!r)return;
+  const edit=canFeedback||canManage;
+  $('detailBody').innerHTML='<h2>'+esc(r.name)+'</h2><p class="muted" style="margin:0">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+' · referred '+fmt(r.date)+' · <span class="pill type">'+esc(r.caseType||'')+'</span></p>'+
+   '<div><strong>Supervisor comment</strong>'+(canManage?'<textarea id="dSup">'+esc(r.supervisorComment)+'</textarea>':'<div class="box">'+esc(r.supervisorComment)+'</div>')+'</div>'+
+   '<div><strong>Counselor feedback</strong>'+(edit?'<textarea id="dFb" placeholder="Write your feedback or follow-up plan…">'+esc(r.counselorFeedback)+'</textarea>':'<div class="box">'+(esc(r.counselorFeedback)||'No feedback yet.')+'</div>')+'</div>'+
+   '<label>Status'+(edit?'<select id="dSt">'+STAT.map(s=>'<option'+((r.status||'Referred')===s?' selected':'')+'>'+s+'</option>').join('')+'</select>':'<span>'+pill(r.status)+'</span>')+'</label>'+
+   '<p id="dErr" class="muted" style="color:#9a2630;margin:0"></p>'+
+   '<div class="actions">'+(canManage?'<button class="btn danger left" id="dDel">Delete</button>':'')+'<button class="btn" data-close="detail">Close</button>'+(edit?'<button class="btn primary" id="dSave">Save</button>':'')+'</div>';
+  $('detail').showModal();
+  if(canFeedback&&r.seen===false)FB.updateReferral(r.id,{seen:true,seenAt:Date.now()}).catch(console.error);
+  if($('dSave'))$('dSave').onclick=async()=>{
+    const patch={counselorFeedback:$('dFb').value.trim(),status:$('dSt').value};
+    if(canManage&&$('dSup'))patch.supervisorComment=$('dSup').value.trim();
+    $('dSave').disabled=true;
+    try{await FB.updateReferral(r.id,patch);$('detail').close();toast('Saved.');}catch(e){$('dErr').textContent='Could not save ('+(e.code||e.message)+').';$('dSave').disabled=false;}
+  };
+  if($('dDel'))$('dDel').onclick=async()=>{if(!confirm('Delete this referral permanently?'))return;try{await FB.deleteReferral(r.id);$('detail').close();toast('Deleted.');}catch(e){$('dErr').textContent='Could not delete ('+(e.code||e.message)+').';}};
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-close]');if(b)$(b.dataset.close).close();});
+['detail','editor'].forEach(i=>$(i).addEventListener('close',()=>draw()));
+/* new referral form */
+function sg(){
+  const q=norm($('nName').value).split(' ').filter(Boolean),box=$('nSuggest');
+  if(q.join('').length<3){box.hidden=true;return;}
+  const res=roster.filter(s=>{const k=norm(s.name).split(' ');return q.every(w=>k.some(x=>x.startsWith(w)));}).slice(0,30);
+  if(!res.length){box.hidden=true;return;}
+  box.innerHTML=res.map((s,i)=>'<button type="button" class="sg" data-i="'+i+'"><b>'+esc(s.name)+'</b><span class="muted">'+esc(s.group||'')+'</span></button>').join('');box._l=res;box.hidden=false;
+}
+$('nName').addEventListener('input',sg);
+$('nSuggest').addEventListener('click',e=>{const b=e.target.closest('.sg');if(!b)return;const s=$('nSuggest')._l[+b.dataset.i];$('nName').value=s.name;const f=$('newForm').elements.grade;if(s.group)f.value=s.group;$('nSuggest').hidden=true;});
+$('newBtn').onclick=()=>{$('newForm').reset();$('newForm').elements.date.value=today();$('newErr').textContent='';$('editor').showModal();};
+$('newForm').addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target.elements;$('newSave').disabled=true;$('newErr').textContent='';
+  try{await FB.createReferral({ref:(Math.max(0,...list.map(r=>r.ref||0))+1),date:f.date.value,name:f.name.value.trim().toUpperCase(),grade:f.grade.value.trim().toUpperCase(),model:f.model.value,caseType:f.caseType.value,supervisorComment:f.supervisorComment.value.trim(),counselorFeedback:'',status:'Referred'});
+    $('editor').close();toast('Referred to the counselor. They will see it as a new case.');}
+  catch(x){$('newErr').textContent='Could not save ('+(x.code||x.message)+').';}
+  finally{$('newSave').disabled=false;}
+});
+(async function start(){
+  try{
+    await FB.ready;
+    if(!FB.auth.currentUser){$('main').innerHTML='<p class="empty">Please sign in from the main page to open this dashboard.</p>';return;}
+    me=FB.profile()||{};const acc=me.access||[];
+    canManage=!!me.admin||acc.includes('discipline');canFeedback=acc.includes('referrals');
+    if(!canManage&&!canFeedback){$('main').innerHTML='<p class="empty">You do not have access to this dashboard.</p>';return;}
+    $('newBtn').hidden=!canManage;
+    if(canManage)FB.loadRosterNames().then(r=>roster=r).catch(()=>{});
+    FB.listenReferrals(a=>{list=a;if($('detail').open||$('editor').open){return;}draw();},e=>{$('main').innerHTML='<p class="empty">The referrals could not be loaded ('+(e.code||e.message)+'). If this is the first time, publish the updated database rules.</p>';});
+  }catch(e){$('main').innerHTML='<p class="empty">The referrals could not be loaded ('+esc(e.code||e.message)+').</p>';}
+})();
+</script></body></html>

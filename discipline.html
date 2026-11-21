@@ -19,7 +19,11 @@ html.embed header{height:56px}
 <div class="shell"><header><span>Behavior and Discipline Dashboard</span><button id="importOpen">Import Excel</button></header><main><div id="content" aria-busy="true">Loading incident records…</div></main></div>
 <dialog id="editor" aria-labelledby="editTitle"><form id="recordForm"><div class="dialog-head"><h2 id="editTitle"></h2><button type="button" data-close="editor" aria-label="Close">✕</button></div><div id="recordFields" class="form-grid"></div><div class="actions"><button class="primary">Save Incident</button><button type="button" data-close="editor">Cancel</button></div></form></dialog>
 <dialog id="importer" aria-labelledby="importTitle"><form id="importForm"><div class="dialog-head"><h2 id="importTitle">Import Behavior Records</h2><button type="button" data-close="importer" aria-label="Close">✕</button></div><p class="muted">To load names, choose the original workbook or a separate Excel file with a Student Name, Full Name or Name column, then select Update Dropdowns. Your existing records and edits are kept. Replace Records and Import requires a Behavior Record sheet. Names are processed in this browser.</p><label class="field">Excel workbook<input id="workbook" type="file" accept=".xlsx" required></label><div class="actions"><button class="primary" id="updateDropdowns">Update Dropdowns</button><button id="importSubmit">Replace Records and Import</button><button type="button" data-close="importer">Cancel</button></div><p id="importError" role="alert"></p></form></dialog>
-<div id="toast" role="status" hidden></div><script>/* Shared SVG chart helpers: Viz.pie (donut + legend) and Viz.bars (vertical, grouped) */
+<dialog id="referDlg" style="border:0;border-radius:18px;padding:0;width:min(560px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.35)"><form id="referForm" style="padding:20px 22px;display:grid;gap:12px"><h2 style="margin:0" id="referTitle">Refer to counselor</h2><p class="muted" style="margin:0" id="referSub"></p>
+<label style="display:grid;gap:4px;font-weight:600">Case<select name="caseType"><option>New Case</option><option>Existing Case</option></select></label>
+<label style="display:grid;gap:4px;font-weight:600">Supervisor comment<textarea name="supervisorComment" rows="5" required style="width:100%;border:1px solid #b9cfc5;border-radius:9px;padding:.5rem;font:inherit"></textarea></label>
+<p id="referErr" style="color:#9a2630;margin:0"></p>
+<div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" data-close="referDlg">Cancel</button><button class="primary" id="referSave">Send to counselor</button></div></form></dialog><div id="toast" role="status" hidden></div><script>/* Shared SVG chart helpers: Viz.pie (donut + legend) and Viz.bars (vertical, grouped) */
 const Viz=(()=>{
  const PAL=['#126251','#e0a526','#3f7fb8','#c24d5b','#7a5aa8','#2fa58a','#d9772b','#6b7f8c','#9ac34a','#b5517f'];
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -907,7 +911,7 @@ function table() {
   const selS=selectedStudent();
   return (selS?'<div class="selbar"><strong>'+esc(selS.name)+'</strong>'+(selS.group?'<span class="muted">'+esc(selS.group)+'</span>':'')+btn('+ Add incident for this student','new-for','primary')+'</div>':'')+'<p class="text-count muted" aria-live="polite">'+(()=>{const o=rows.filter(isOtherParty).length;return o?n.format(rows.length-o)+' incidents + '+n.format(o)+' as other party':n.format(rows.length)+' records';})()+'</p><div class="table-wrap" tabindex="0" aria-label="Incident records table"><table class="wide-table"><thead><tr><th>Date</th><th>Student and Section</th><th>Infraction</th><th>School Action</th><th>Record</th></tr></thead><tbody>'+
     rows.map(r=>'<tr><td><time>'+showDate(r.date)+'</time></td><td><strong>'+esc(displayName(r.name)||'Unspecified')+'</strong><br><span class="muted">'+esc(r.grade||'Unspecified')+'</span>'+(isOtherParty(r)?'<br><span class="pill">Involved as other party · '+esc(displayName(r.involved))+'</span>':'')+'</td><td>'+esc(translate(r.violation))+'</td><td>'+esc(translate(r.action))+
-      (needsData(r).length?'<br><span class="pill amber">'+n.format(needsData(r).length)+' fields missing</span>':'')+'</td><td>'+btn('View and Edit','edit:'+r.id)+'</td></tr>').join('')+'</tbody></table></div>';
+      (needsData(r).length?'<br><span class="pill amber">'+n.format(needsData(r).length)+' fields missing</span>':'')+'</td><td>'+btn('View and Edit','edit:'+r.id)+' '+btn('Refer to counselor','refer:'+r.id)+'</td></tr>').join('')+'</tbody></table></div>';
 }
 function summary() {
   const from=startOfWeek(weekDay), to=endOfWeek(weekDay);
@@ -1155,6 +1159,23 @@ $('recordForm').addEventListener('change',event=>{
   const previous=records.find(record=>record.id===editId);
   event.currentTarget.elements.sid.value=(previous?.name===selectedName&&previous.sid)||rosterId(selectedName);
 });
+
+let referFor=null;
+function openRefer(r){
+  referFor=r;
+  $('referSub').textContent=displayName(r.name)+' · '+(r.grade||'')+' · '+translate(r.violation)+' ('+showDate(r.date)+')';
+  const f=$('referForm').elements;f.caseType.value='New Case';
+  f.supervisorComment.value='Incident on '+showDate(r.date)+': '+translate(r.violation)+(r.action?'. School action: '+translate(r.action)+'.':'.');
+  $('referErr').textContent='';$('referDlg').showModal();
+}
+$('referForm').addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target.elements,r=referFor;if(!r)return;$('referSave').disabled=true;
+  try{
+    await FB.createReferral({date:new Date().toISOString().slice(0,10),name:displayName(r.name).toUpperCase(),grade:r.grade||'',model:r.model||'',caseType:f.caseType.value,supervisorComment:f.supervisorComment.value.trim(),counselorFeedback:'',status:'Referred',incidentId:r.id});
+    $('referDlg').close();notify('Referred to the counselor. They will see it as a new case.');
+  }catch(x){$('referErr').textContent='Could not send ('+(x.code||x.message)+').';}
+  finally{$('referSave').disabled=false;}
+});
 document.addEventListener('click',async event=>{
   const sg=event.target.closest('.sg-item');
   if(sg){const box=$('nameSuggest');const p=box&&box._list&&box._list[Number(sg.dataset.sg)];if(p)pickStudent(p);return;}
@@ -1166,6 +1187,7 @@ document.addEventListener('click',async event=>{
   if(button.dataset.tab){tab=button.dataset.tab;draw();}
   const action=button.dataset.act||'';
   if(action==='new')editor();
+  if(action.startsWith('refer:')){const r=records.find(x=>x.id===action.slice(6));if(r)openRefer(r);}
   if(action==='new-for'){const p=selectedStudent();editor(null,p);}
   if(action.startsWith('edit:'))editor(records.find(r=>r.id===action.slice(5)));
   if(action==='search')submitNameSearch();
