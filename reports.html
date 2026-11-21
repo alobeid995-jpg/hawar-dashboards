@@ -43,6 +43,7 @@ dialog{border:0;border-radius:18px;padding:0;width:min(680px,94vw);box-shadow:0 
 <section class="panel" id="linkPanel" style="margin-top:14px" hidden></section>
 <main id="main" aria-busy="true"><p class="empty">Loading…</p></main>
 <dialog id="cDlg" class="wide"><div class="dlg" id="cBox"></div></dialog>
+<dialog id="tDlg"><form class="dlg" id="tForm"></form></dialog>
 <dialog id="dlg"><form class="dlg" id="form"></form></dialog>
 <div id="toast" hidden></div>
 <script>/* Shared SVG chart helpers: Viz.pie (donut + legend) and Viz.bars (vertical, grouped) */
@@ -108,7 +109,7 @@ const Viz=(()=>{
  return {pie,bars,PAL,esc};
 })();
 </script>
-<script src="config.js?v=18"></script><script src="fb.bundle.js?v=18"></script>
+<script src="config.js?v=19"></script><script src="fb.bundle.js?v=19"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -120,11 +121,34 @@ const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bahrain'}).forma
 const norm=v=>String(v||'').normalize('NFKD').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 const GRADES='6B 6M 6S 6Y 6G 6R 7B 7M 7S 7Y 7G 7R 8B 8M 8S 8Y 8G 8R 8L 9B 9M 9S 9Y 9G 9R 10B 10M 10S 10Y 10G 10R 10L 11B 11S 11Y 11IB 11L 12B 12S 12Y 12IB 12R 12L'.split(' ');
 const PERIODS=['1','2','3','4','5','6'];
+const MS_CLASSES='6B 6M 6S 6Y 7B 7M 7S 7Y 8B 8M 8S 8Y'.split(' ');
+const DEF_TEACHERS=['Mr.Mustafa','Mr.Yasser','Ms.Abhami','Ms.Malak','Mr.Benard','Ms.Cynthia','Ms.Gihan','Ms.Samia','Ms.Marwa','Mr.Yusuf Abbasi','Mr.Mousa','Mr.Mohamed Z.','Ms.Suhad','Mr.Ahmed Marhoon','Mr.Johnny','Mr.Yousef Q.','Mr.Shady','Mr.Mohamed J.','Mr.Haykal','Ms.Esra','Mr.Ahmed Alsaiah','Mr.Mosad','Ms.Khawla','Mr.Khalid M.','Mr.Raji','Ms.Michelle','Ms.Divina','Ms.April','Ms.Teena','Ms.Pamela','Ms.Alaa','Ms.Hanady','Mr.Khalid O.','Ms.Huma'];
+function linkPayload(){const r={};roster.filter(x=>MS_CLASSES.includes(x.group)).forEach(x=>{(r[x.group]=r[x.group]||[]).push(String(x.name).toUpperCase());});Object.values(r).forEach(a=>a.sort());return {teachers:[...blueTeachers],roster:r};}
+const sigP=p=>(p.teachers||[]).join('|')+'#'+Object.keys(p.roster||{}).sort().map(g=>g+':'+(p.roster[g]||[]).join(',')).join(';');
+let syncBusy=false;
+async function syncLinks(){
+  if(syncBusy||!roster.length||!blueTeachers.length)return;
+  const pl=linkPayload(),sg=sigP(pl),stale=links.filter(l=>l.type==='blue'&&l.active&&sigP(l)!==sg);
+  if(!stale.length)return;syncBusy=true;
+  try{for(const l of stale)await FB.updateFormLink(l.key,pl);}catch(e){console.error('link sync',e);}finally{syncBusy=false;}
+}
+function openTeachers(){
+  const dlg=$('tDlg');
+  $('tForm').innerHTML='<h2>Teachers list</h2><p class="muted" style="margin:0">One name per line. Teachers pick their name from this list in the Blue report form. Add or remove names any time.</p><textarea id="tTxt" rows="14" style="width:100%">'+esc(blueTeachers.join('\n'))+'</textarea><p id="tErr" class="err small" style="color:#9a2630;margin:0"></p><div class="actions"><button type="button" class="btn" id="tCancel">Cancel</button><button class="btn primary" id="tSave">Save list</button></div>';
+  dlg.showModal();$('tCancel').onclick=()=>dlg.close();
+  $('tForm').onsubmit=async e=>{e.preventDefault();
+    const names=[...new Set($('tTxt').value.split('\n').map(x=>x.trim()).filter(Boolean))];
+    if(!names.length){$('tErr').textContent='Add at least one name.';return;}
+    $('tSave').disabled=true;
+    try{await FB.saveBlueTeachers(names);blueTeachers=names;dlg.close();toast('Teachers list saved.');syncLinks();}
+    catch(x){$('tErr').textContent='Could not save ('+(x.code||x.message)+'). Publish the latest database rules.';$('tSave').disabled=false;}
+  };
+}
 const ORD={1:'1st',2:'2nd',3:'3rd'};
 const SUP=['Warning the student','Verbal agreement','Written agreement','Informing parents by phone','After-school detention','Out-of-school detention','Discipline committee','Refer to the counsellor'];
 const CRIT=[['r1','On time'],['r2','Follows instructions'],['r3','Respect'],['r4','Behaviour'],['r5','Classwork']];
 const SCORE={Excellent:4,Good:3,Acceptable:2,Weak:1};
-let tab='blue',blue=[],obs=[],links=[],roster=[],linkErr='',toastT,pickedStu=null,fil={q:'',grade:'',status:'active'},canEdit=true;
+let tab='blue',blue=[],obs=[],links=[],roster=[],blueTeachers=[],linkErr='',toastT,pickedStu=null,fil={q:'',grade:'',status:'active'},canEdit=true;
 const toast=m=>{const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4500);};
 const countBy=(list,f)=>{const m={};list.forEach(r=>{const k=f(r)||'Unspecified';m[k]=(m[k]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
 const pie=(list,f,label)=>Viz.pie(countBy(list,f).map(([label,value])=>({label,value})),{centerLabel:label});
@@ -142,11 +166,12 @@ function drawBlueLink(){
   box.hidden=false;const l=latestLink('blue');
   if(linkErr){box.innerHTML='<div class="lk"><h3>Teacher link</h3><p class="muted">Links could not be loaded ('+esc(linkErr)+'). Publish the latest database rules, then reload.</p></div>';return;}
   let h='<div class="lk"><h3>Teacher link · Blue report form</h3>';
-  if(!l)h+='<p class="muted">No link yet. Generate one and send it to teachers: they report a violation without signing in, and it appears here.</p><div class="lkrow"><button class="btn primary" id="lkGen">Generate link</button></div>';
-  else h+='<div class="lkrow"><span class="pill '+(l.active?'Active':'Paused')+'">'+(l.active?'Active':'Paused')+'</span><span class="muted">'+(l.active?'Anyone with this link can submit.':'Paused: nobody can open or submit through this link.')+'</span></div><div class="lkurl" id="lkUrl">'+esc(linkUrl(l))+'</div><div class="lkrow"><button class="btn" id="lkCopy">Copy link</button>'+(l.active?'<button class="btn" id="lkPause">Pause link</button>':'<button class="btn primary" id="lkResume">Resume link</button>')+'<button class="btn" id="lkGen">Generate new link</button></div>';
+  if(!l)h+='<p class="muted">No link yet. Generate one and send it to teachers: they report a violation without signing in, and it appears here.</p><div class="lkrow"><button class="btn primary" id="lkGen">Generate link</button><button class="btn" id="lkTch">Teachers list</button></div>';
+  else h+='<div class="lkrow"><span class="pill '+(l.active?'Active':'Paused')+'">'+(l.active?'Active':'Paused')+'</span><span class="muted">'+(l.active?'Anyone with this link can submit.':'Paused: nobody can open or submit through this link.')+'</span></div><div class="lkurl" id="lkUrl">'+esc(linkUrl(l))+'</div><div class="lkrow"><button class="btn" id="lkCopy">Copy link</button>'+(l.active?'<button class="btn" id="lkPause">Pause link</button>':'<button class="btn primary" id="lkResume">Resume link</button>')+'<button class="btn" id="lkGen">Generate new link</button><button class="btn" id="lkTch">Teachers list</button></div>';
   box.innerHTML=h+'</div>';
   const on=(id,f)=>{if($(id))$(id).onclick=async()=>{try{await f();}catch(e){toast('Could not do that ('+(e.code||e.message)+').');}};};
-  on('lkGen',async()=>{if(l&&!confirm('Generate a new link? The current link will stop working.'))return;await FB.createFormLink('blue',links);toast('New link is ready.');});
+  on('lkGen',async()=>{if(l&&!confirm('Generate a new link? The current link will stop working.'))return;if(!roster.length||!blueTeachers.length){toast('Lists are still loading. Try again in a moment.');return;}await FB.createFormLink('blue',links,linkPayload());toast('New link is ready.');});
+  on('lkTch',async()=>openTeachers());
   on('lkPause',async()=>{await FB.setFormLinkActive(l.key,false);toast('Link paused.');});
   on('lkResume',async()=>{await FB.setFormLinkActive(l.key,true);toast('Link is active again.');});
   on('lkCopy',()=>copy(linkUrl(l),$('lkUrl')));
@@ -156,15 +181,16 @@ function drawBlueLink(){
 const ts=r=>(r.date||'')+' '+String(r.createdAt||0).padStart(15,'0');
 function buildCases(){
   const m=new Map();
-  blue.forEach(r=>{const k=norm(r.student);if(!k)return;const c=m.get(k)||{key:k,name:r.student,grade:'',reports:[]};c.reports.push(r);if(r.grade)c.grade=r.grade;m.set(k,c);});
+  blue.forEach(r=>{const k=norm(r.student)+'|'+norm(r.teacher);if(!norm(r.student))return;const c=m.get(k)||{key:k,name:r.student,teacher:r.teacher||'',grade:'',reports:[]};c.reports.push(r);if(r.grade)c.grade=r.grade;m.set(k,c);});
   return [...m.values()].map(c=>{
     c.reports.sort((a,b)=>ts(a).localeCompare(ts(b)));
-    c.open=c.reports.filter(r=>!r.closedAt);c.max=Math.max(0,...c.open.map(r=>+r.vno||1));
-    c.flag=c.open.length>=3||c.max>=3;
+    c.open=c.reports.filter(r=>!r.closedAt);c.open.forEach((r,i)=>{r._v=String(Math.min(i+1,3));});c.reports.filter(r=>r.closedAt).forEach(r=>{r._v=r.vno||'1';});
+    c.max=Math.min(c.open.length,3);
+    c.flag=c.open.length>=3;
     c.status=c.flag?'Needs':c.open.length?'Mon':'Closed';
     c.isNew=c.open.some(r=>r.source==='form'&&!r.reviewed);
     c.last=c.reports.reduce((a,r)=>(r.date||'')>a?r.date:a,'');
-    c.teachers=[...new Set(c.reports.map(r=>r.teacher).filter(Boolean))];
+    c.teachers=[c.teacher].filter(Boolean);
     return c;
   });
 }
@@ -179,14 +205,14 @@ function drawBlue(){
   let rows=cases.filter(c=>(fil.status==='all'||(fil.status==='active'?c.status!=='Closed':c.status===fil.status))&&(!fil.grade||c.grade===fil.grade)&&(!q.length||q.every(w=>c.key.includes(w))));
   rows.sort((a,b)=>(b.flag-a.flag)||(b.isNew-a.isNew)||b.last.localeCompare(a.last));
   const grades=[...new Set(cases.map(c=>c.grade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'en',{numeric:true}));
-  const ch=blue.length?'<div class="charts">'+[['Violation number',pie(blue.map(r=>({...r,v:ORD[r.vno]||'1st'})),r=>r.v,'reports')],['By class',bars(blue,r=>r.grade,'Reports','#3f7fb8')],['By teacher',bars(blue,r=>r.teacher,'Reports','#3f7fb8')],['By period',bars(blue,r=>r.period?'P'+r.period:'','Reports','#b4561b')],['Reports per month',monthBars(blue,'Reports')]].map(([t,h])=>'<div class="panel"><h3>'+t+'</h3>'+h+'</div>').join('')+'</div>':'';
-  $('main').innerHTML=(flagged.length?'<div class="alertbox"><strong>⚠ '+flagged.length+' student'+(flagged.length===1?'':'s')+' need'+(flagged.length===1?'s':'')+' the supervisor\'s action</strong><div>'+flagged.map(c=>'<button data-case="'+esc(c.key)+'">'+esc(c.name)+' · '+c.open.length+' report'+(c.open.length===1?'':'s')+(c.max>=3?' · 3rd violation':'')+'</button>').join('')+'</div></div>':'')+
+  const ch=blue.length?'<div class="charts">'+[['Violation number',pie(blue.map(r=>({...r,v:ORD[r._v||r.vno]||'1st'})),r=>r.v,'reports')],['By class',bars(blue,r=>r.grade,'Reports','#3f7fb8')],['By teacher',bars(blue,r=>r.teacher,'Reports','#3f7fb8')],['By period',bars(blue,r=>r.period?'P'+r.period:'','Reports','#b4561b')],['Reports per month',monthBars(blue,'Reports')]].map(([t,h])=>'<div class="panel"><h3>'+t+'</h3>'+h+'</div>').join('')+'</div>':'';
+  $('main').innerHTML=(flagged.length?'<div class="alertbox"><strong>⚠ '+flagged.length+' student'+(flagged.length===1?'':'s')+' need'+(flagged.length===1?'s':'')+' the supervisor\'s action</strong><div>'+flagged.map(c=>'<button data-case="'+esc(c.key)+'">'+esc(c.name)+' · '+esc(c.teacher)+' · '+c.open.length+' report'+(c.open.length===1?'':'s')+' · 3rd violation</button>').join('')+'</div></div>':'')+
    '<div class="cards">'+cards.map(([l,v])=>'<div class="card"><span>'+l+'</span><strong>'+nf.format(v)+'</strong></div>').join('')+'</div>'+ch+
    '<section class="panel" style="margin-top:14px"><div class="filters"><label>Search by student<input id="fq" type="search" value="'+esc(fil.q)+'" placeholder="Type part of the name"></label>'+
    '<label>Class<select id="fg"><option value="">All</option>'+grades.map(g=>'<option'+(fil.grade===g?' selected':'')+'>'+esc(g)+'</option>').join('')+'</select></label>'+
    '<label>Show<select id="fs">'+[['active','Needs action + monitoring'],['Needs','Needs supervisor'],['Mon','Monitoring'],['Closed','Closed'],['all','All']].map(([v,l])=>'<option value="'+v+'"'+(fil.status===v?' selected':'')+'>'+l+'</option>').join('')+'</select></label>'+
    '<button class="btn" id="fclear">Clear</button><button class="btn" id="csv">⬇ Download (Excel)</button></div></section>'+
-   '<section class="panel"><div class="tablewrap">'+(rows.length?'<table><thead><tr><th>Student</th><th>Open reports</th><th>Highest</th><th>Last report</th><th>Teachers</th><th>Status</th></tr></thead><tbody>'+rows.map(c=>'<tr class="row" data-case="'+esc(c.key)+'"><td><strong>'+esc(c.name)+'</strong>'+(c.isNew?' <span class="pill newb">NEW · form</span>':'')+'<br><span class="muted">'+esc(c.grade)+'</span></td><td>'+dotsFor(c)+'</td><td>'+(c.max?'<span class="pill v'+c.max+'">'+ORD[c.max]+'</span>':'–')+'</td><td>'+fmt(c.last)+'</td><td><div class="clamp">'+esc(c.teachers.join(', '))+'</div></td><td><span class="pill '+c.status+'">'+({Needs:'Needs supervisor',Mon:'Monitoring',Closed:'Closed'})[c.status]+'</span></td></tr>').join('')+'</tbody></table>':'<p class="empty">'+(blue.length?'No students match.':'No reports yet. Generate the teacher link above to start receiving reports.')+'</p>')+'</div></section>';
+   '<section class="panel"><div class="tablewrap">'+(rows.length?'<table><thead><tr><th>Student</th><th>Open reports</th><th>Highest</th><th>Last report</th><th>Teacher</th><th>Status</th></tr></thead><tbody>'+rows.map(c=>'<tr class="row" data-case="'+esc(c.key)+'"><td><strong>'+esc(c.name)+'</strong>'+(c.isNew?' <span class="pill newb">NEW · form</span>':'')+'<br><span class="muted">'+esc(c.grade)+'</span></td><td>'+dotsFor(c)+'</td><td>'+(c.max?'<span class="pill v'+c.max+'">'+ORD[c.max]+'</span>':'–')+'</td><td>'+fmt(c.last)+'</td><td><div class="clamp">'+esc(c.teachers.join(', '))+'</div></td><td><span class="pill '+c.status+'">'+({Needs:'Needs supervisor',Mon:'Monitoring',Closed:'Closed'})[c.status]+'</span></td></tr>').join('')+'</tbody></table>':'<p class="empty">'+(blue.length?'No students match.':'No reports yet. Generate the teacher link above to start receiving reports.')+'</p>')+'</div></section>';
   $('main').removeAttribute('aria-busy');
   $('fq').oninput=e=>{fil.q=e.target.value;const p=e.target.selectionStart;drawBlue();const x=$('fq');x.focus();x.setSelectionRange(p,p);};
   $('fg').onchange=e=>{fil.grade=e.target.value;drawBlue();};$('fs').onchange=e=>{fil.status=e.target.value;drawBlue();};
@@ -200,25 +226,26 @@ function csvOut(name,head,lines){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'-'+today()+'.csv';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
 }
 function csvBlue(){
+  buildCases();
   csvOut('blue-reports',['Date','Period','Student','Class','Violation no.','Teacher','Description','Advised student','Called/met parent','Other action','Status','Supervisor action','Supervisor note','Closed on'],
-   [...blue].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(r=>[r.date,r.period,r.student,r.grade,r.vno,r.teacher,r.description,r.actTalk?'Yes':'',r.actParent?'Yes':'',r.actOther,r.closedAt?'Closed':'Open',(r.supervisorActions||[]).join('; '),r.supervisorNote,r.closedAt?new Date(r.closedAt).toLocaleDateString('en-GB'):'']));
+   [...blue].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(r=>[r.date,r.period,r.student,r.grade,r._v||r.vno,r.teacher,r.description,r.actTalk?'Yes':'',r.actParent?'Yes':'',r.actOther,r.closedAt?'Closed':'Open',(r.supervisorActions||[]).join('; '),r.supervisorNote,r.closedAt?new Date(r.closedAt).toLocaleDateString('en-GB'):'']));
 }
 function openCase(key){
   const c=buildCases().find(x=>x.key===key);if(!c)return;
   const form=c.reports.filter(r=>r.source==='form'&&!r.reviewed).map(r=>r.id);
   if(form.length)FB.patchBlue(form,{reviewed:true}).catch(()=>{});
-  const rep=r=>'<div class="rep'+(r.closedAt?' closed':'')+'"><header><span class="pill v'+(r.vno||1)+'">'+(ORD[r.vno]||'1st')+' violation</span><strong>'+fmt(r.date)+(r.period?' · Period '+esc(r.period):'')+'</strong><span class="muted">'+esc(r.teacher)+'</span>'+(r.source==='form'?'<span class="pill formp">form</span>':'')+(r.closedAt?'<span class="pill Closed">closed</span>':'')+'<span style="margin-left:auto"><button class="btn danger" data-del="'+esc(r.id)+'" title="Delete this report">🗑</button></span></header><div>'+esc(r.description)+'</div><div class="small muted">Teacher action: '+([r.actTalk?'advised the student':'',r.actParent?'called/met parent':'',r.actOther||''].filter(Boolean).join(' · ')||'none recorded')+'</div></div>';
+  const rep=r=>'<div class="rep'+(r.closedAt?' closed':'')+'"><header><span class="pill v'+(r._v||r.vno||1)+'">'+(ORD[r._v||r.vno]||'1st')+' violation</span><strong>'+fmt(r.date)+(r.period?' · Period '+esc(r.period):'')+'</strong><span class="muted">'+esc(r.teacher)+'</span>'+(r.source==='form'?'<span class="pill formp">form</span>':'')+(r.closedAt?'<span class="pill Closed">closed</span>':'')+'<span style="margin-left:auto"><button class="btn danger" data-del="'+esc(r.id)+'" title="Delete this report">🗑</button></span></header><div>'+esc(r.description)+'</div><div class="small muted">Teacher action: '+([r.actTalk?'advised the student':'',r.actParent?'called/met parent':'',r.actOther||''].filter(Boolean).join(' · ')||'none recorded')+'</div></div>';
   const groups=new Map();c.reports.filter(r=>r.closedAt).forEach(r=>{const k=r.caseId||('t'+r.closedAt);(groups.get(k)||groups.set(k,[]).get(k)).push(r);});
   const hist=[...groups.values()].map(g=>{const r=g[0];return '<div class="ntf"><div>✔ Case closed on <strong>'+new Date(r.closedAt).toLocaleDateString('en-GB')+'</strong> ('+g.length+' report'+(g.length===1?'':'s')+')'+(r.closedBy?' by '+esc(r.closedBy):'')+'</div><div>Action: '+esc((r.supervisorActions||[]).join('; ')||'—')+'</div>'+(r.supervisorNote?'<div>Note: '+esc(r.supervisorNote)+'</div>':'')+'<div><a href="#" data-reopen="'+esc(r.caseId||'')+'" data-ids="'+g.map(x=>x.id).join(',')+'">Reopen this case</a></div></div>';}).join('');
-  $('cBox').innerHTML='<h2>'+esc(c.name)+' <span class="muted" style="font-weight:400;font-size:.95rem">'+esc(c.grade)+'</span></h2>'+
-   (c.flag?'<div class="alertbox" style="margin:0"><strong>⚠ '+(c.max>=3?'Third violation reported':'3 open reports')+': the supervisor needs to act.</strong></div>':'')+
+  $('cBox').innerHTML='<h2>'+esc(c.name)+' <span class="muted" style="font-weight:400;font-size:.95rem">'+esc(c.grade)+' · reports by '+esc(c.teacher||'—')+'</span></h2>'+
+   (c.flag?'<div class="alertbox" style="margin:0"><strong>⚠ '+'Third violation from '+esc(c.teacher||'this teacher')+': the supervisor needs to act.</strong></div>':'')+
    '<h3 style="margin:4px 0 0">Open reports ('+c.open.length+')</h3>'+(c.open.length?c.open.map(rep).join(''):'<p class="muted" style="margin:0">No open reports.</p>')+
    (c.open.length?'<h3 style="margin:8px 0 0">Supervisor action</h3><div class="acts" id="acts">'+SUP.map((a,i)=>'<label><input type="checkbox" value="'+esc(a)+'"> '+(i+1)+'. '+esc(a)+(a==='Out-of-school detention'?' <input id="detDays" placeholder="days" style="width:90px;min-height:0;padding:.25rem .4rem">':'')+'</label>').join('')+'</div><label style="display:grid;gap:4px;font-weight:600;font-size:.88rem">Note (optional)<textarea id="supNote" maxlength="1000"></textarea></label><p class="muted small" style="margin:0">Recording an action closes all open reports for this student, and the count starts again from 1.</p>':'')+
    (groups.size?'<h3 style="margin:8px 0 0">History</h3>'+hist+'<details><summary class="muted small">Closed reports</summary><div style="display:grid;gap:8px;margin-top:8px">'+c.reports.filter(r=>r.closedAt).map(rep).join('')+'</div></details>':'')+
    '<p id="cErr" class="err small" style="color:#9a2630;margin:0"></p><div class="actions"><button class="btn left" id="cAdd">＋ Add a report for this student</button><button class="btn" id="cClose">Close window</button>'+(c.open.length?'<button class="btn primary" id="cSave">Record action &amp; close case</button>':'')+'</div>';
   const dlg=$('cDlg');if(!dlg.open)dlg.showModal();
   $('cClose').onclick=()=>dlg.close();
-  $('cAdd').onclick=()=>{dlg.close();openAdd({student:c.name,grade:c.grade});};
+  $('cAdd').onclick=()=>{dlg.close();openAdd({student:c.name,grade:c.grade,teacher:c.teacher});};
   $('cBox').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this report permanently?'))return;try{await FB.deleteBlue(b.dataset.del);blue=blue.filter(x=>x.id!==b.dataset.del);drawBlue();if(buildCases().some(x=>x.key===key))openCase(key);else dlg.close();}catch(e){$('cErr').textContent='Could not delete ('+(e.code||e.message)+').';}});
   $('cBox').querySelectorAll('[data-reopen]').forEach(a=>a.onclick=async e=>{e.preventDefault();if(!confirm('Reopen these reports? They count again toward the 3 reports.'))return;try{const ids=a.dataset.ids.split(',');await FB.patchBlue(ids,{closedAt:null,caseId:null,supervisorActions:[],supervisorNote:'',closedBy:''});ids.forEach(id=>{const r=blue.find(x=>x.id===id);if(r){r.closedAt=null;}});drawBlue();openCase(key);}catch(x){$('cErr').textContent='Could not reopen ('+(x.code||x.message)+').';}});
   if($('cSave'))$('cSave').onclick=async()=>{
@@ -227,7 +254,8 @@ function openCase(key){
     $('cSave').disabled=true;
     try{
       const me=FB.profile()||{};
-      await FB.patchBlue(c.open.map(r=>r.id),{closedAt:Date.now(),closedBy:me.name||me.email||'',caseId:'c'+Date.now().toString(36),supervisorActions:acts,supervisorNote:$('supNote').value.trim(),reviewed:true});
+      const patch={closedAt:Date.now(),closedBy:me.name||me.email||'',caseId:'c'+Date.now().toString(36),supervisorActions:acts,supervisorNote:$('supNote').value.trim(),reviewed:true};
+      for(const k of ['1','2','3']){const ids=c.open.filter(r=>r._v===k).map(r=>r.id);if(ids.length)await FB.patchBlue(ids,{...patch,vno:k});}
       dlg.close();toast('Action recorded. The case is closed.');
     }catch(e){$('cErr').textContent='Could not save ('+(e.code||e.message)+').';$('cSave').disabled=false;}
   };
@@ -248,15 +276,16 @@ function attachSuggest(input,box,onPick){
 function openAdd(pre){
   const r=pre||{};
   $('form').innerHTML='<h2>New blue report</h2><label class="namebox">Student name<input name="student" id="fStu" autocomplete="off" required value="'+esc(r.student||'')+'" placeholder="Type 3 letters of the name">'+suggestHTML()+'</label>'+
-   '<div class="grid2"><label>Class'+sel('grade',GRADES,r.grade,true,true)+'</label><label>Violation number<select name="vno" required><option value="1">1 – First</option><option value="2">2 – Second</option><option value="3">3 – Third</option></select></label></div>'+
+   '<div class="grid2"><label>Class'+sel('grade',GRADES,r.grade,true,true)+'</label><label>Teacher'+sel('teacher',blueTeachers.includes(r.teacher)||!r.teacher?blueTeachers:blueTeachers.concat(r.teacher),r.teacher,true,true)+'</label></div>'+
    '<div class="grid2"><label>Date<input type="date" name="date" required value="'+today()+'"></label><label>Period'+sel('period',PERIODS,'',true,true)+'</label></div>'+
-   '<label>Teacher<input name="teacher" required maxlength="80"></label><label>What happened<textarea name="description" required maxlength="1500"></textarea></label>'+
+   '<p class="muted small" style="margin:0">The violation number is set automatically (1st, 2nd, 3rd) from this teacher\'s open reports on this student.</p><label>What happened<textarea name="description" required maxlength="1500"></textarea></label>'+
    '<p id="fErr" style="color:#9a2630;margin:0"></p><div class="actions"><button type="button" class="btn" id="fCancel">Cancel</button><button class="btn primary" id="fSave">Save</button></div>';
   $('dlg').showModal();$('fCancel').onclick=()=>$('dlg').close();
   attachSuggest($('fStu'),$('form').querySelector('.suggest'),s=>{if(s.group){const g=$('form').elements.grade;if([...g.options].some(o=>o.value===s.group))g.value=s.group;}});
   $('form').onsubmit=async e=>{
     e.preventDefault();const f=new FormData(e.target),rec={source:'admin',reviewed:true};
     for(const [k,v] of f.entries())rec[k]=String(v).trim();rec.student=rec.student.toUpperCase();
+    const prev=blue.filter(x=>!x.closedAt&&norm(x.student)===norm(rec.student)&&norm(x.teacher)===norm(rec.teacher)).length;rec.vno=String(Math.min(prev+1,3));
     $('fSave').disabled=true;
     try{await FB.saveBlue(rec);$('dlg').close();toast('Report added.');}catch(x){$('fErr').textContent='Could not save ('+(x.code||x.message)+').';$('fSave').disabled=false;}
   };
@@ -329,10 +358,11 @@ $('addBtn').onclick=()=>openAdd();
     if(!FB.auth.currentUser){$('main').innerHTML='<p class="empty">Please sign in from the main page to open this dashboard.</p>';return;}
     const me=FB.profile()||{};
     if(!me.admin&&!(me.access||[]).includes('reports')){$('main').innerHTML='<p class="empty">You do not have access to this dashboard.</p>';$('addBtn').hidden=true;return;}
-    FB.loadRosterNames().then(r=>roster=r).catch(()=>{});
+    FB.loadRosterNames().then(r=>{roster=r;syncLinks();}).catch(()=>{});
+    FB.loadBlueTeachers().then(n=>{blueTeachers=n&&n.length?n:DEF_TEACHERS.slice();syncLinks();}).catch(()=>{blueTeachers=DEF_TEACHERS.slice();});
     const busy=()=>$('dlg').open||$('cDlg').open;
     const err=e=>{$('main').innerHTML='<p class="empty">The reports could not be loaded ('+esc(e.code||e.message)+'). If this is the first time, publish the updated database rules.</p>';};
-    FB.listenFormLinks(a=>{links=a;linkErr='';if(!busy())draw();},e=>{linkErr=e.code||e.message;draw();});
+    FB.listenFormLinks(a=>{links=a;linkErr='';syncLinks();if(!busy())draw();},e=>{linkErr=e.code||e.message;draw();});
     FB.listenBlueReports(a=>{blue=a;if(!busy())draw();},err);
     FB.listenObservations(a=>{obs=a;if(!busy())draw();},err);
     $('cDlg').addEventListener('close',()=>draw());$('dlg').addEventListener('close',()=>draw());

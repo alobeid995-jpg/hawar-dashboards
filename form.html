@@ -23,7 +23,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #2fa58a;outline-offset
 <div class="head"><small>Hawar International School · Middle School Boys</small><h1 id="title">Teacher form</h1><p id="sub">Your answer is saved directly to the school record. No sign-in needed.</p></div>
 <div class="card" id="card"><p class="note">Loading…</p></div>
 </div>
-<script src="config.js?v=18"></script><script src="fb.bundle.js?v=18"></script>
+<script src="config.js?v=19"></script><script src="fb.bundle.js?v=19"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -66,9 +66,9 @@ function show(){
   });
 }
 
-const PERIODS=['1','2','3','4','5','6'],RATE=['Excellent','Good','Acceptable','Weak'];
+let BL=null;const PERIODS=['1','2','3','4','5','6'],RATE=['Excellent','Good','Acceptable','Weak'];
 const CRIT=[['r1','Coming to class on time'],['r2','Following the class instructions'],['r3','Respect the teachers and students'],['r4','Behaviour in the class'],['r5','Completed classwork']];
-function showReport(){
+async function showReport(){
   const common='<label>Your name '+R+'<input name="teacher" required maxlength="80" autocomplete="name" placeholder="e.g. Mr. Ahmed"></label>';
   let body;
   if(type==='obs'){
@@ -81,21 +81,25 @@ function showReport(){
      '<label>Teacher notes<textarea name="notes" maxlength="1000"></textarea></label>';
   }else{
     $('sub').textContent='Report a student violation to the supervisor.';
-    body=common+'<label>Student full name '+R+'<input name="student" required maxlength="120" autocomplete="off" placeholder="Student name as in the school list"></label>'+
-     '<div class="grid2"><label>Class '+R+sel('grade',GRADES,true)+'</label><label>Violation number '+R+'<select name="vno" required><option value="">Select…</option><option value="1">1 – First violation</option><option value="2">2 – Second violation</option><option value="3">3 – Third violation</option></select></label></div>'+
+    let L=null;try{await FB.ready;L=await FB.loadFormLink(key);}catch(e){}
+    if(!L||L.type!=='blue'||!L.active||!L.roster||!L.teachers){$('card').innerHTML='<p class="err">This form is closed or the link is no longer valid. Please ask the supervisor.</p>';return;}
+    BL=L;const cls=Object.keys(L.roster).sort((a,b)=>a.localeCompare(b,'en',{numeric:true}));
+    body='<label>Your name '+R+sel('teacher',L.teachers,true)+'</label>'+
+     '<div class="grid2"><label>Class '+R+sel('grade',cls,true)+'</label><label>Student '+R+'<select name="student" id="stuSel" required disabled><option value="">Choose the class first</option></select></label></div>'+
      '<div class="grid2"><label>Date '+R+'<input type="date" name="date" required value="'+today()+'"></label><label>Period '+R+sel('period',PERIODS,true)+'</label></div>'+
      '<label>What happened '+R+'<textarea name="description" required maxlength="1500" placeholder="Describe the violation"></textarea></label>'+
      '<fieldset class="rate"><legend>Action taken by the teacher</legend><label class="chk"><input type="checkbox" name="actTalk" value="1"> Advised the student</label><label class="chk"><input type="checkbox" name="actParent" value="1"> Called / met the parent</label><label>Other<input name="actOther" maxlength="300" placeholder="Other action (optional)"></label></fieldset>'+
-     '<p class="note">If this is the third violation, make sure the first and second were handled and recorded before sending the student to the supervisor.</p>';
+     '<p class="note">The violation number (1st, 2nd, 3rd) is set automatically by the school system from your earlier reports on this student. On the third violation the supervisor is alerted.</p>';
   }
   $('card').innerHTML='<form id="f" autocomplete="off">'+body+'<div class="hp" aria-hidden="true"><label>Leave empty<input name="website" tabindex="-1" autocomplete="off"></label></div><p class="err" id="err"></p><button class="btn" id="send">Submit</button><p class="note">Fields marked * are required.</p></form>';
+  if(type==='blue'){const g=$('f').elements.grade;g.onchange=()=>{const st=$('stuSel');const a=BL.roster[g.value]||[];st.innerHTML='<option value="">Select…</option>'+a.map(n=>'<option>'+esc(n)+'</option>').join('');st.disabled=!a.length;};}
   $('f').addEventListener('submit',async e=>{
     e.preventDefault();const fd=new FormData(e.target);
     if(fd.get('website')){done();return;}
     const rec={key};
     for(const [k,v] of fd.entries()){if(k!=='website')rec[k]=String(v).trim();}
     if(type==='obs'){rec.student=stu;rec.grade=stuG;if(!CRIT.some(([k])=>rec[k])){$('err').textContent='Please tick at least one rating.';return;}}
-    else{rec.student=rec.student.toUpperCase();rec.actTalk=fd.get('actTalk')==='1';rec.actParent=fd.get('actParent')==='1';}
+    else{rec.vno='1';rec.student=rec.student.toUpperCase();rec.actTalk=fd.get('actTalk')==='1';rec.actParent=fd.get('actParent')==='1';}
     $('send').disabled=true;$('err').textContent='';
     try{await FB.ready;await FB.submitPublic(rec,type);done();}
     catch(x){$('err').textContent=/permission/.test(x.code||'')?'This form is closed or the link is no longer valid. Please ask the supervisor.':'Could not send ('+(x.code||x.message)+'). Check your connection and try again.';$('send').disabled=false;}

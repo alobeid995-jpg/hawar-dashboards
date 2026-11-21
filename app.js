@@ -58,7 +58,7 @@ function show(k){
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.tab===k?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
   ['attendance','discipline','referrals','followups','reports'].forEach(n=>{
     const f=$('frame-'+n);f.hidden=k!==n;
-    if(k===n&&!f.getAttribute('src'))f.src=n+'.html?v=18';
+    if(k===n&&!f.getAttribute('src'))f.src=n+'.html?v=19';
   });
   $('admin').hidden=k!=='admin';$('home').hidden=k!=='home';
   if(k==='home')renderHome();
@@ -149,7 +149,8 @@ service cloud.firestore {
       allow create: if can('followups') || formOk(doc);
     }
     match /formLinks/{k} {
-      allow read, write: if can('followups') || can('reports');
+      allow get: if (resource != null && resource.data.active == true) || can('followups') || can('reports');
+      allow list, write: if can('followups') || can('reports');
     }
     match /observations/{k} {
       allow read, update, delete: if can('reports');
@@ -163,7 +164,7 @@ service cloud.firestore {
       allow read, write: if can('followups');
     }
     match /settings/{k} {
-      allow read, write: if can('followups');
+      allow read, write: if can('followups') || can('reports');
     }
     match /referrals/{id} {
       allow read: if can('referrals') || can('discipline');
@@ -241,8 +242,8 @@ let repUnsub=null,repSeen=null;
 const normN=v=>String(v||'').normalize('NFKD').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 function flaggedStudents(list){
   const g=new Map();
-  list.filter(r=>!r.closedAt).forEach(r=>{const k=normN(r.student);if(!k)return;const o=g.get(k)||{name:r.student,n:0,max:0};o.n++;o.max=Math.max(o.max,+r.vno||1);g.set(k,o);});
-  return [...g.entries()].filter(([k,o])=>o.n>=3||o.max>=3).map(([k,o])=>({key:k,name:o.name,n:o.n,max:o.max}));
+  list.filter(r=>!r.closedAt).forEach(r=>{if(!normN(r.student))return;const k=normN(r.student)+'|'+normN(r.teacher);const o=g.get(k)||{name:r.student,teacher:r.teacher||'',n:0,max:0};o.n++;g.set(k,o);});
+  return [...g.entries()].filter(([k,o])=>o.n>=3).map(([k,o])=>({key:k,name:o.name+(o.teacher?' ('+o.teacher+')':''),n:o.n,max:3}));
 }
 function startReportAlerts(){
   if(repUnsub){repUnsub();repUnsub=null;}repSeen=null;window.__repFlag=[];
