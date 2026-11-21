@@ -98,7 +98,7 @@ const Viz=(()=>{
  return {pie,bars,PAL,esc};
 })();
 </script>
-<script src="config.js?v=13"></script><script src="fb.bundle.js?v=13"></script>
+<script src="config.js?v=14"></script><script src="fb.bundle.js?v=14"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -118,7 +118,7 @@ const METHODS=['Phone call','WhatsApp','In-person meeting','Email','Other'];
 const isNew=r=>r.source==='form'&&!r.reviewed;
 const badge=r=>r.source==='form'?' <span class="pill '+(isNew(r)?'newb':'formp')+'">'+(isNew(r)?'NEW · form':'form')+'</span>':'';
 const CFG={
- resit:{label:'Re-sit & Make-up Approvals',cols:[['date','Date of exam',r=>fmt(r.date)],['student','Student',r=>'<strong>'+esc(r.student)+'</strong>'+badge(r)+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['subject','Subject',r=>esc(r.subject)+'<br><span class="muted">'+esc(r.teacher)+'</span>'],['reason','Reason of absence',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['approval','Approval',r=>'<span class="pill '+esc(r.approval)+'">'+esc(r.approval||'Pending')+'</span>'],['makeup','Make-up exam',r=>'<span class="pill '+esc(r.makeup||'No')+'">'+esc(r.makeup||'No')+'</span>']],
+ resit:{label:'Re-sit & Make-up Approvals',cols:[['date','Date of exam',r=>fmt(r.date)],['student','Student',r=>'<strong>'+esc(r.student)+'</strong>'+badge(r)+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['subject','Subject',r=>esc(r.subject)+'<br><span class="muted">'+esc(r.teacher)+'</span>'],['reason','Reason of absence',r=>r.reason?'<div class="clamp">'+esc(r.reason)+'</div>':'<span class="muted">Not set yet</span>'],['approval','Approval',r=>'<span class="pill '+esc(r.approval)+'">'+esc(r.approval||'Pending')+'</span>'],['makeup','Make-up exam',r=>'<span class="pill '+esc(r.makeup||'No')+'">'+esc(r.makeup||'No')+'</span>']],
   csv:['date','student','grade','model','subject','teacher','reason','approval','makeup'],csvH:['Date of Exam','Student Name','Class','Model of teaching','Subject','Teacher name','Reason of Absence','Approval Status','Make-up Exam']},
  parent:{label:'Parent Contacts',cols:[['date','Date',r=>fmt(r.date)+'<br><span class="muted">'+dow(r.date)+'</span>'],['student','Student',r=>'<strong>'+esc(r.student)+'</strong>'+badge(r)+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['teacher','Teacher',r=>esc(r.teacher)],['contact','Contact',r=>esc(r.contact)+'<br><span class="muted">'+esc(r.method)+'</span>'],['reason','Reason for contact',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['outcome','Outcome and agreed action',r=>'<div class="clamp">'+esc(r.outcome)+'</div>']],
   csv:['date','day','student','grade','model','teacher','contact','method','reason','outcome'],csvH:['Date','Day','Student Name','Grade','Model of teaching','Teacher','Contact','Communication Method','Reason for contact','Outcome and agreed action']}
@@ -143,7 +143,7 @@ function draw(){
   if(tab==='resit'){
     const p=L.filter(r=>r.approval==='Pending'||!r.approval).length,a=L.filter(r=>r.approval==='Approved').length,x=L.filter(r=>r.approval==='Rejected').length,mk=L.filter(r=>r.makeup==='Yes').length;
     cards=[['Total requests',L.length],['New from form',L.filter(isNew).length],['Pending',p],['Approved',a],['Rejected',x],['Make-up exams',mk]];
-    charts=[['Approval status',pie(L.map(r=>({...r,approval:r.approval||'Pending'})),r=>r.approval,'requests')],['By subject',bars(L,r=>r.subject,'Requests')],['Reasons of absence',pie(L,r=>r.reason,'requests')],['By class',bars(L,r=>r.grade,'Requests','#3f7fb8')],['Requests per month',monthBars(L,'Requests')],['Make-up exam given?',pie(L,r=>r.makeup||'No','requests')]];
+    charts=[['Approval status',pie(L.map(r=>({...r,approval:r.approval||'Pending'})),r=>r.approval,'requests')],['By subject',bars(L,r=>r.subject,'Requests')],['Reasons of absence',pie(L,r=>r.reason||'Not set yet','requests')],['By class',bars(L,r=>r.grade,'Requests','#3f7fb8')],['Requests per month',monthBars(L,'Requests')],['Make-up exam given?',pie(L,r=>r.makeup||'No','requests')]];
   }else{
     const st=new Set(L.map(r=>norm(r.student)));
     cards=[['Total contacts',L.length],['New from form',L.filter(isNew).length],['Students contacted',st.size],['Teachers involved',new Set(L.map(r=>r.teacher).filter(Boolean)).size],['This month',L.filter(r=>(r.date||'').slice(0,7)===today().slice(0,7)).length]];
@@ -181,7 +181,7 @@ function openForm(rec){
   const teacher='<label>Teacher<input name="teacher" list="dlTeachers" required value="'+esc(r.teacher)+'" placeholder="Teacher name"></label>';
   let body;
   if(t==='resit')body=stu+gm+'<div class="grid2"><label>Subject'+sel('subject',SUBJECTS,r.subject,true,true)+'</label>'+teacher+'</div>'+
-    '<div class="grid2"><label>Date of exam<input type="date" name="date" required value="'+esc(r.date||today())+'"></label><label>Reason of absence'+sel('reason',REASONS,r.reason,true,true)+'</label></div>'+
+    '<div class="grid2"><label>Date of exam<input type="date" name="date" required value="'+esc(r.date||today())+'"></label><label>Reason of absence (supervisor)'+sel('reason',REASONS,r.reason,false,true)+'</label></div>'+
     '<div class="grid2"><label>Approval status'+sel('approval',APPROVAL,r.approval||'Pending',true)+'</label><label>Make-up exam given?'+sel('makeup',['No','Yes'],r.makeup||'No',true)+'</label></div>';
   else body=stu+gm+'<div class="grid2"><label>Date<input type="date" name="date" required value="'+esc(r.date||today())+'"></label>'+teacher+'</div>'+
     '<div class="grid2"><label>Who was contacted'+sel('contact',CONTACT,r.contact,true,true)+'</label><label>Communication method'+sel('method',METHODS,r.method,true,true)+'</label></div>'+
@@ -189,7 +189,7 @@ function openForm(rec){
   $('form').innerHTML='<h2>'+(rec?'Edit entry':(t==='resit'?'New re-sit / make-up request':'New parent contact'))+'</h2>'+body+'<p id="fErr" style="color:#9a2630;margin:0"></p><div class="actions">'+(rec?'<button type="button" class="btn danger left" id="fDel">Delete</button>':'')+'<button type="button" class="btn" id="fCancel">Cancel</button><button class="btn primary" id="fSave">Save</button></div>';
   $('dlg').showModal();
   $('fCancel').onclick=()=>$('dlg').close();
-  if($('fDel'))$('fDel').onclick=async()=>{if(!confirm('Delete this entry permanently?'))return;try{await FB.deleteFollowup(rec.id);$('dlg').close();toast('Deleted.');}catch(e){$('fErr').textContent='Could not delete ('+(e.code||e.message)+').';}};
+  if($('fDel'))$('fDel').onclick=async()=>{if(!confirm('Delete this entry permanently?'))return;try{await FB.deleteFollowup(rec.id);$('dlg').close();draw();toast('Deleted.');}catch(e){$('fErr').textContent='Could not delete ('+(e.code||e.message)+').';}};
   $('fStu').addEventListener('input',()=>{
     const q=norm($('fStu').value).split(' ').filter(Boolean),box=$('fSug');
     if(q.join('').length<3){box.hidden=true;return;}
@@ -207,7 +207,7 @@ $('form').addEventListener('submit',async e=>{
   if(rec.source==='form')rec.reviewed=true;
   if(rec.type==='resit'&&rec.date&&!rec.model)rec.model='Mainstream';
   $('fSave').disabled=true;
-  try{await FB.saveFollowup(rec);$('dlg').close();toast('Saved.');}catch(x){$('fErr').textContent='Could not save ('+(x.code||x.message)+').';}
+  try{await FB.saveFollowup(rec);$('dlg').close();draw();toast('Saved.');}catch(x){$('fErr').textContent='Could not save ('+(x.code||x.message)+').';}
   finally{$('fSave').disabled=false;}
 });
 $('addBtn').onclick=()=>openForm(null);

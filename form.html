@@ -22,7 +22,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #2fa58a;outline-offset
 <div class="head"><small>Hawar International School · Middle School Boys</small><h1 id="title">Teacher form</h1><p id="sub">Your answer is saved directly to the school record. No sign-in needed.</p></div>
 <div class="card" id="card"><p class="note">Loading…</p></div>
 </div>
-<script src="config.js?v=13"></script><script src="fb.bundle.js?v=13"></script>
+<script src="config.js?v=14"></script><script src="fb.bundle.js?v=14"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -48,7 +48,7 @@ function show(){
    '<label>Reason for contact '+R+'<textarea name="reason" required maxlength="1000"></textarea></label>'+
    '<label>Outcome and agreed action<textarea name="outcome" maxlength="1000"></textarea></label>':
    common+'<div class="grid2"><label>Subject '+R+sel('subject',SUBJECTS,true)+'</label><label>Date of the exam '+R+'<input type="date" name="date" required value="'+today()+'"></label></div>'+
-   '<label>Reason of absence '+R+sel('reason',REASONS,true)+'</label><p class="note">The supervisor will review and approve the request.</p>';
+   '<p class="note">The supervisor will add the reason and approve or reject the request.</p>';
   $('card').innerHTML='<form id="f" autocomplete="off">'+body+'<div class="hp" aria-hidden="true"><label>Leave empty<input name="website" tabindex="-1" autocomplete="off"></label></div><p class="err" id="err"></p><button class="btn" id="send">Submit</button><p class="note">Fields marked * are required.</p></form>';
   $('f').addEventListener('submit',async e=>{
     e.preventDefault();const fd=new FormData(e.target);
