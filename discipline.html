@@ -905,8 +905,8 @@ function table() {
     return '<div class="empty" role="status"><h3>No matching records</h3><p class="muted">'+message+'</p>'+link+'</div>';
   }
   const selS=selectedStudent();
-  return (selS?'<div class="selbar"><strong>'+esc(selS.name)+'</strong>'+(selS.group?'<span class="muted">'+esc(selS.group)+'</span>':'')+btn('+ Add incident for this student','new-for','primary')+'</div>':'')+'<p class="text-count muted" aria-live="polite">'+n.format(rows.length)+' records</p><div class="table-wrap" tabindex="0" aria-label="Incident records table"><table class="wide-table"><thead><tr><th>Date</th><th>Student and Section</th><th>Infraction</th><th>School Action</th><th>Record</th></tr></thead><tbody>'+
-    rows.map(r=>'<tr><td><time>'+showDate(r.date)+'</time></td><td><strong>'+esc(displayName(r.name)||'Unspecified')+'</strong><br><span class="muted">'+esc(r.grade||'Unspecified')+'</span></td><td>'+esc(translate(r.violation))+'</td><td>'+esc(translate(r.action))+
+  return (selS?'<div class="selbar"><strong>'+esc(selS.name)+'</strong>'+(selS.group?'<span class="muted">'+esc(selS.group)+'</span>':'')+btn('+ Add incident for this student','new-for','primary')+'</div>':'')+'<p class="text-count muted" aria-live="polite">'+(()=>{const o=rows.filter(isOtherParty).length;return o?n.format(rows.length-o)+' incidents + '+n.format(o)+' as other party':n.format(rows.length)+' records';})()+'</p><div class="table-wrap" tabindex="0" aria-label="Incident records table"><table class="wide-table"><thead><tr><th>Date</th><th>Student and Section</th><th>Infraction</th><th>School Action</th><th>Record</th></tr></thead><tbody>'+
+    rows.map(r=>'<tr><td><time>'+showDate(r.date)+'</time></td><td><strong>'+esc(displayName(r.name)||'Unspecified')+'</strong><br><span class="muted">'+esc(r.grade||'Unspecified')+'</span>'+(isOtherParty(r)?'<br><span class="pill">Involved as other party · '+esc(displayName(r.involved))+'</span>':'')+'</td><td>'+esc(translate(r.violation))+'</td><td>'+esc(translate(r.action))+
       (needsData(r).length?'<br><span class="pill amber">'+n.format(needsData(r).length)+' fields missing</span>':'')+'</td><td>'+btn('View and Edit','edit:'+r.id)+'</td></tr>').join('')+'</tbody></table></div>';
 }
 function summary() {
@@ -1109,12 +1109,19 @@ function suggestStudents(q){
   const list=pref.length?pref:pool.filter(p=>words.every(w=>p.key.includes(w)));
   return list.sort((a,b)=>(b.key.startsWith(words[0])-a.key.startsWith(words[0]))||a.name.localeCompare(b.name,'en')).slice(0,40);
 }
-function incidentCount(p){return records.filter(r=>searchText(fullName(r.name))===p.key||searchText(fullName(r.involved))===p.key).length;}
+function incidentCount(p){return records.filter(r=>searchText(fullName(r.name))===p.key).length;}
+function involvedCount(p){return records.filter(r=>searchText(fullName(r.name))!==p.key&&searchText(fullName(r.involved))===p.key).length;}
+function isOtherParty(r){
+  const words=searchText(filter.query).split(' ').filter(Boolean);
+  if(!words.length)return false;
+  const own=searchText(fullName(r.name));
+  return !words.every(w=>own.includes(w));
+}
 function showSuggest(){
   const box=$('nameSuggest');if(!box)return;
   const list=suggestStudents(nameDraft);
   if(!list.length){box.hidden=true;box.innerHTML=nameDraft.trim().length>=3&&searchText(nameDraft).length>=3?'':'';if(nameDraft.trim().length>=3&&searchText(nameDraft).length>=3){box.innerHTML='<div class="sg-empty">No student found with this name.</div>';box.hidden=false;}return;}
-  box.innerHTML=list.map((p,i)=>{const c=incidentCount(p);return '<button type="button" class="sg-item" data-sg="'+i+'"><strong>'+esc(p.name)+'</strong><span class="muted">'+esc(p.group||'')+'</span><span class="pill '+(c?'amber':'')+'">'+(c?n.format(c)+' incident'+(c===1?'':'s'):'No incidents')+'</span></button>';}).join('');
+  box.innerHTML=list.map((p,i)=>{const c=incidentCount(p),o=involvedCount(p);return '<button type="button" class="sg-item" data-sg="'+i+'"><strong>'+esc(p.name)+'</strong><span class="muted">'+esc(p.group||'')+'</span><span class="pill '+(c?'amber':'')+'">'+(c?n.format(c)+' incident'+(c===1?'':'s'):'No incidents')+(o?' · involved in '+n.format(o):'')+'</span></button>';}).join('');
   box._list=list;box.hidden=false;
 }
 function pickStudent(p){
