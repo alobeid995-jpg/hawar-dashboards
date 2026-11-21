@@ -24,14 +24,16 @@ dialog{border:0;border-radius:18px;padding:0;width:min(680px,94vw);box-shadow:0 
 .actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.actions .left{margin-right:auto}
 .namebox{position:relative}.suggest{position:absolute;left:0;right:0;top:100%;z-index:20;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(16,47,42,.18);max-height:240px;overflow:auto;margin-top:3px}.sg{display:flex;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #eef3f0;background:#fff;padding:9px 12px;cursor:pointer}.sg:hover{background:#eaf5ef}.sg b{flex:1;font-weight:600}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#103b33;color:#fff;border-radius:12px;padding:.7rem 1.1rem;z-index:99}
+.mtab{width:100%;min-width:0}.mtab td,.mtab th{padding:.4rem .5rem}.steps{margin:0;padding-left:1.2rem;display:grid;gap:4px}.ntf{font-size:.85rem;background:var(--light);border:1px solid var(--line);border-radius:10px;padding:.5rem .7rem;display:grid;gap:4px}.ntf a{color:var(--green);font-weight:600}
 [hidden]{display:none!important}
 .lk{display:grid;gap:10px}.lk h3{margin:0}.lkrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.lkurl{flex:1 1 100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;background:var(--light);border:1px solid var(--line);border-radius:10px;padding:.55rem .7rem;word-break:break-all;user-select:all}.pill.Active{background:#e1f3e7;color:#1d6a3a}.pill.Paused{background:#fff0d8;color:#8a5200}
 @media(max-width:760px){body{padding:14px}.charts{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.hero h1{font-size:1.5rem}}
 </style></head><body>
-<div class="hero"><div><small>Middle School · Boys Section</small><h1>Follow-Ups</h1><p>Re-sit &amp; make-up exam approvals, and the parent–teacher contact log, with charts and Excel-ready downloads.</p></div><button class="btn" id="addBtn">＋ Add entry</button></div>
+<div class="hero"><div><small>Middle School · Boys Section</small><h1>Follow-Ups</h1><p>Re-sit &amp; make-up exam approvals, and the parent–teacher contact log, with charts and Excel-ready downloads.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="mailBtn">✉ Email setup</button><button class="btn" id="addBtn">＋ Add entry</button></div></div>
 <div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="resit" aria-selected="true">Re-sit &amp; Make-up Approvals</button><button class="tab" role="tab" data-tab="parent" aria-selected="false">Parent Contacts</button></div>
 <section class="panel" id="linkPanel" style="margin-top:14px" hidden></section>
 <main id="main" aria-busy="true"><p class="empty">Loading…</p></main>
+<dialog id="mDlg"><div class="dlg" id="mBox"></div></dialog>
 <dialog id="dlg"><form class="dlg" id="form"></form></dialog>
 <datalist id="dlTeachers"></datalist>
 <div id="toast" hidden></div>
@@ -98,7 +100,7 @@ const Viz=(()=>{
  return {pie,bars,PAL,esc};
 })();
 </script>
-<script src="config.js?v=14"></script><script src="fb.bundle.js?v=14"></script>
+<script src="config.js?v=15"></script><script src="fb.bundle.js?v=15"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -123,7 +125,7 @@ const CFG={
  parent:{label:'Parent Contacts',cols:[['date','Date',r=>fmt(r.date)+'<br><span class="muted">'+dow(r.date)+'</span>'],['student','Student',r=>'<strong>'+esc(r.student)+'</strong>'+badge(r)+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['teacher','Teacher',r=>esc(r.teacher)],['contact','Contact',r=>esc(r.contact)+'<br><span class="muted">'+esc(r.method)+'</span>'],['reason','Reason for contact',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['outcome','Outcome and agreed action',r=>'<div class="clamp">'+esc(r.outcome)+'</div>']],
   csv:['date','day','student','grade','model','teacher','contact','method','reason','outcome'],csvH:['Date','Day','Student Name','Grade','Model of teaching','Teacher','Contact','Communication Method','Reason for contact','Outcome and agreed action']}
 };
-let links=[],linkErr='',all=[],tab='resit',filter={q:'',grade:'',extra:''},roster=[],canEdit=true,toastT,editing=null;
+let teachers=[],mail={},links=[],linkErr='',all=[],tab='resit',filter={q:'',grade:'',extra:''},roster=[],canEdit=true,toastT,editing=null;
 const toast=m=>{const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4000);};
 const items=()=>all.filter(r=>r.type===tab);
 const countBy=(list,f)=>{const m={};list.forEach(r=>{const k=f(r)||'Unspecified';m[k]=(m[k]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
@@ -164,7 +166,7 @@ function draw(){
   $('csv').onclick=()=>download(rows);
   if($('seeAll'))$('seeAll').onclick=async()=>{for(const r of L.filter(isNew))await FB.saveFollowup({...r,reviewed:true}).catch(console.error);toast('Marked as reviewed.');};
   document.querySelectorAll('tr.row').forEach(tr=>tr.onclick=()=>openForm(all.find(x=>x.id===tr.dataset.id)));
-  $('dlTeachers').innerHTML=[...new Set(all.map(r=>r.teacher).filter(Boolean))].sort().map(t=>'<option value="'+esc(t)+'">').join('');
+  $('dlTeachers').innerHTML=[...new Set(all.map(r=>r.teacher).concat(teachers.map(t=>t.name)).filter(Boolean))].sort().map(t=>'<option value="'+esc(t)+'">').join('');
 }
 function download(rows){
   const c=CFG[tab];
@@ -182,12 +184,14 @@ function openForm(rec){
   let body;
   if(t==='resit')body=stu+gm+'<div class="grid2"><label>Subject'+sel('subject',SUBJECTS,r.subject,true,true)+'</label>'+teacher+'</div>'+
     '<div class="grid2"><label>Date of exam<input type="date" name="date" required value="'+esc(r.date||today())+'"></label><label>Reason of absence (supervisor)'+sel('reason',REASONS,r.reason,false,true)+'</label></div>'+
-    '<div class="grid2"><label>Approval status'+sel('approval',APPROVAL,r.approval||'Pending',true)+'</label><label>Make-up exam given?'+sel('makeup',['No','Yes'],r.makeup||'No',true)+'</label></div>';
+    '<label>Teacher email (the decision is sent here)<input type="email" name="teacherEmail" value="'+esc(r.teacherEmail||'')+'" placeholder="name@example.com"></label>'+
+    '<div class="grid2"><label>Approval status'+sel('approval',APPROVAL,r.approval||'Pending',true)+'</label><label>Make-up exam given?'+sel('makeup',['No','Yes'],r.makeup||'No',true)+'</label></div><div class="ntf" id="fNote" hidden></div>';
   else body=stu+gm+'<div class="grid2"><label>Date<input type="date" name="date" required value="'+esc(r.date||today())+'"></label>'+teacher+'</div>'+
     '<div class="grid2"><label>Who was contacted'+sel('contact',CONTACT,r.contact,true,true)+'</label><label>Communication method'+sel('method',METHODS,r.method,true,true)+'</label></div>'+
     '<label>Reason for contact<textarea name="reason" required>'+esc(r.reason)+'</textarea></label><label>Outcome and agreed action<textarea name="outcome">'+esc(r.outcome)+'</textarea></label>';
   $('form').innerHTML='<h2>'+(rec?'Edit entry':(t==='resit'?'New re-sit / make-up request':'New parent contact'))+'</h2>'+body+'<p id="fErr" style="color:#9a2630;margin:0"></p><div class="actions">'+(rec?'<button type="button" class="btn danger left" id="fDel">Delete</button>':'')+'<button type="button" class="btn" id="fCancel">Cancel</button><button class="btn primary" id="fSave">Save</button></div>';
   $('dlg').showModal();
+  if(t==='resit'){drawNote(rec);const tin=$('form').elements.teacher,em=$('form').elements.teacherEmail;tin.addEventListener('change',()=>{const f=teachers.find(x=>norm(x.name)===norm(tin.value));if(f&&!em.value)em.value=f.email;});}
   $('fCancel').onclick=()=>$('dlg').close();
   if($('fDel'))$('fDel').onclick=async()=>{if(!confirm('Delete this entry permanently?'))return;try{await FB.deleteFollowup(rec.id);$('dlg').close();draw();toast('Deleted.');}catch(e){$('fErr').textContent='Could not delete ('+(e.code||e.message)+').';}};
   $('fStu').addEventListener('input',()=>{
@@ -207,7 +211,13 @@ $('form').addEventListener('submit',async e=>{
   if(rec.source==='form')rec.reviewed=true;
   if(rec.type==='resit'&&rec.date&&!rec.model)rec.model='Mainstream';
   $('fSave').disabled=true;
-  try{await FB.saveFollowup(rec);$('dlg').close();draw();toast('Saved.');}catch(x){$('fErr').textContent='Could not save ('+(x.code||x.message)+').';}
+  const prevAp=editing?editing.approval||'Pending':'Pending';
+  if(rec.teacherEmail)rec.teacherEmail=rec.teacherEmail.toLowerCase();
+  try{
+    await FB.saveFollowup(rec);$('dlg').close();draw();
+    if(rec.type==='resit'&&rec.teacher&&rec.teacherEmail)FB.saveTeacher(rec.teacher,rec.teacherEmail).catch(()=>{});
+    if(rec.type==='resit'&&(rec.approval==='Approved'||rec.approval==='Rejected')&&rec.approval!==prevAp)notifyDecision(rec);else toast('Saved.');
+  }catch(x){$('fErr').textContent='Could not save ('+(x.code||x.message)+').';}
   finally{$('fSave').disabled=false;}
 });
 $('addBtn').onclick=()=>openForm(null);
@@ -232,6 +242,66 @@ function drawLink(){
   on('lkResume',async()=>{await FB.setFormLinkActive(l.key,true);toast('Link is active again.');});
   on('lkCopy',async()=>{try{await navigator.clipboard.writeText(linkUrl(l));toast('Link copied.');}catch{const r=document.createRange();r.selectNodeContents($('lkUrl'));const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Select and copy the link.');}});
 }
+
+const decisionText=(rec)=>{
+  const me=FB.profile()||{},st=rec.approval;
+  const lines=['Dear '+(rec.teacher||'colleague')+',','','The re-sit / make-up exam request you submitted has been '+st.toUpperCase()+'.','',
+   'Student: '+rec.student,'Class: '+(rec.grade||''),'Subject: '+(rec.subject||''),'Date of exam: '+fmt(rec.date)];
+  if(rec.reason)lines.push('Reason of absence: '+rec.reason);
+  lines.push('Decision: '+st);if(st==='Approved')lines.push('Make-up exam: '+(rec.makeup==='Yes'?'Yes':'To be arranged'));
+  lines.push('','Regards,',(me.name||'Middle School Supervisor')+(me.title?', '+me.title:''),'Hawar International School – Middle School');
+  return {subject:'Re-sit request '+st+': '+rec.student+' ('+(rec.grade||'')+(rec.subject?', '+rec.subject:'')+')',text:lines.join('\n')};
+};
+async function sendMail(to,subject,text){
+  if(!mail||!mail.url)return {ok:false,error:'notset'};
+  const me=FB.profile()||{};
+  const r=await fetch(mail.url,{method:'POST',body:JSON.stringify({token:mail.token,to,subject,text,fromName:'Hawar Middle School',replyTo:me.email||''})});
+  return await r.json();
+}
+async function notifyDecision(rec){
+  if(!rec.teacherEmail){toast('Saved. No email address for this teacher, so no notice was sent.');return;}
+  if(!mail||!mail.url){toast('Saved. Email is not set up yet (use ✉ Email setup).');return;}
+  const m=decisionText(rec);
+  try{
+    const j=await sendMail(rec.teacherEmail,m.subject,m.text);
+    if(!j.ok)throw new Error(j.error||'failed');
+    await FB.saveFollowup({...rec,notifiedAt:Date.now(),notifiedTo:rec.teacherEmail,notifiedStatus:rec.approval});
+    toast('Saved. Email sent to '+rec.teacherEmail+'.');
+  }catch(e){toast('Saved, but the email could not be sent ('+(e.message||e)+'). Open the entry and use Resend.');}
+}
+function drawNote(rec){
+  const n=$('fNote');if(!n)return;
+  const r=rec||{};let h='';
+  if(r.notifiedAt)h+='<div>✉ Notice sent to <strong>'+esc(r.notifiedTo)+'</strong> ('+esc(r.notifiedStatus)+') on '+new Date(r.notifiedAt).toLocaleString('en-GB')+'</div>';
+  if(rec&&(r.approval==='Approved'||r.approval==='Rejected')&&r.teacherEmail){const m=decisionText(r);h+='<div><a href="#" id="nResend">Resend email</a> · <a id="nDraft" href="mailto:'+esc(r.teacherEmail)+'?subject='+encodeURIComponent(m.subject)+'&body='+encodeURIComponent(m.text)+'">Open in my email app</a></div>';}
+  n.hidden=!h;n.innerHTML=h;
+  if($('nResend'))$('nResend').onclick=async e=>{e.preventDefault();$('dlg').close();await notifyDecision(r);};
+}
+const MAILSCRIPT=tok=>"const TOKEN = '"+tok+"';\nfunction doPost(e) {\n  try {\n    const d = JSON.parse(e.postData.contents);\n    if (d.token !== TOKEN) return out({ok:false, error:'token'});\n    if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(d.to)) return out({ok:false, error:'address'});\n    GmailApp.sendEmail(d.to, String(d.subject).slice(0,200), String(d.text).slice(0,5000), {name: d.fromName || 'School', replyTo: d.replyTo || ''});\n    return out({ok:true});\n  } catch (err) { return out({ok:false, error:String(err)}); }\n}\nfunction out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }";
+function openMail(){
+  const tok=mail.token||(()=>{const al='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789',r=crypto.getRandomValues(new Uint8Array(24));return [...r].map(x=>al[x%al.length]).join('');})();
+  const ts=[...teachers].sort((a,b)=>a.name.localeCompare(b.name));
+  $('mBox').innerHTML='<h2>Email setup</h2>'+
+   '<section><h3 style="margin:0 0 6px">Teachers\' emails</h3><p class="muted" style="margin:0 0 8px">Saved automatically when a teacher uses the form, or when you type an email in an entry. You can also add or fix them here.</p>'+
+   '<div class="tablewrap"><table class="mtab"><tbody>'+(ts.length?ts.map(t=>'<tr><td>'+esc(t.name)+'</td><td>'+esc(t.email)+'</td><td><button type="button" class="btn" data-tdel="'+esc(t.id)+'">Remove</button></td></tr>').join(''):'<tr><td class="muted">No teachers yet.</td></tr>')+'</tbody></table></div>'+
+   '<div class="grid2" style="margin-top:8px"><label>Teacher name<input id="tN" placeholder="e.g. Mr. Ahmed"></label><label>Email<input id="tE" type="email" placeholder="name@example.com"></label></div><div class="actions"><button type="button" class="btn primary" id="tAdd">Add / update teacher</button></div></section>'+
+   '<section><h3 style="margin:0 0 6px">Automatic email on Approved / Rejected</h3><p class="muted" style="margin:0 0 6px">Free, one-time setup. Emails are sent from the Google account you use below.</p>'+
+   '<ol class="steps"><li>Copy the script below.</li><li>Open <strong>script.google.com</strong> → <strong>New project</strong> → delete the sample code → paste → <strong>Save</strong>.</li><li><strong>Deploy → New deployment</strong> → type <strong>Web app</strong> → Execute as: <strong>Me</strong> → Who has access: <strong>Anyone</strong> → Deploy → allow access.</li><li>Copy the <strong>Web app URL</strong> and paste it here.</li></ol>'+
+   '<div class="lkurl" id="mScript" style="white-space:pre-wrap">'+esc(MAILSCRIPT(tok))+'</div><div class="actions" style="justify-content:flex-start"><button type="button" class="btn" id="mCopy">Copy script</button></div>'+
+   '<label>Web app URL<input id="mUrl" placeholder="https://script.google.com/macros/s/…/exec" value="'+esc(mail.url||'')+'"></label>'+
+   '<div class="actions" style="justify-content:flex-start"><button type="button" class="btn primary" id="mSave">Save</button></div>'+
+   '<div class="grid2"><label>Send a test email to<input id="mTo" type="email" placeholder="your email"></label><div style="align-self:end"><button type="button" class="btn" id="mTest">Send test</button></div></div><p id="mMsg" class="muted" style="margin:0"></p></section>'+
+   '<div class="actions"><button type="button" class="btn" id="mClose">Close</button></div>';
+  $('mDlg').showModal();
+  const msg=t=>{$('mMsg').textContent=t;};
+  $('mClose').onclick=()=>$('mDlg').close();
+  $('mCopy').onclick=async()=>{try{await navigator.clipboard.writeText(MAILSCRIPT(tok));msg('Script copied.');}catch{msg('Select the script text and copy it.');}};
+  $('mSave').onclick=async()=>{const u=$('mUrl').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){msg('That does not look like the Web app URL (it ends with /exec).');return;}try{await FB.saveMailSettings({url:u,token:tok});mail={url:u,token:tok};msg('Saved. Send a test email to check it.');}catch(e){msg('Could not save ('+(e.code||e.message)+').');}};
+  $('mTest').onclick=async()=>{if(!mail.url||mail.token!==tok){msg('Save the URL first.');return;}const to=$('mTo').value.trim();if(!to){msg('Type an email address for the test.');return;}msg('Sending…');try{const j=await sendMail(to,'Test: Follow-Ups email','This is a test from the Hawar Follow-Ups dashboard. Email notifications are working.');msg(j.ok?'Test email sent to '+to+'.':'Failed ('+(j.error||'unknown')+'). Check the script was deployed with access: Anyone, and paste the latest URL.');}catch(e){msg('Could not reach the script ('+(e.message||e)+').');}};
+  $('tAdd').onclick=async()=>{const n=$('tN').value.trim(),m=$('tE').value.trim();if(!n||!/^\S+@\S+\.\S+$/.test(m)){msg('Enter a name and a valid email.');return;}try{await FB.saveTeacher(n,m);teachers=teachers.filter(x=>norm(x.name)!==norm(n)).concat([{id:'new'+Date.now(),name:n,email:m.toLowerCase()}]);openMail();}catch(e){msg('Could not save ('+(e.code||e.message)+').');}};
+  $('mBox').querySelectorAll('[data-tdel]').forEach(b=>b.onclick=async()=>{try{await FB.deleteTeacher(b.dataset.tdel);teachers=teachers.filter(x=>x.id!==b.dataset.tdel);openMail();}catch(e){msg('Could not remove ('+(e.code||e.message)+').');}});
+}
+$('mailBtn').onclick=openMail;
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;filter={q:'',grade:'',extra:''};draw();});
 $('dlg').addEventListener('close',()=>draw());
 (async function start(){
@@ -241,6 +311,7 @@ $('dlg').addEventListener('close',()=>draw());
     const me=FB.profile()||{};
     if(!me.admin&&!(me.access||[]).includes('followups')){$('main').innerHTML='<p class="empty">You do not have access to this dashboard.</p>';$('addBtn').hidden=true;return;}
     FB.loadRosterNames().then(r=>roster=r).catch(()=>{});
+    FB.listenTeachers(a=>{teachers=a;},()=>{});FB.loadMailSettings().then(m=>{mail=m||{};}).catch(()=>{});
     FB.listenFormLinks(a=>{links=a;linkErr='';if(!$('dlg').open)drawLink();},e=>{linkErr=e.code||e.message;drawLink();});
     FB.listenFollowups(a=>{all=a;if($('dlg').open)return;draw();},e=>{$('main').innerHTML='<p class="empty">The follow-ups could not be loaded ('+esc(e.code||e.message)+'). If this is the first time, publish the updated database rules.</p>';});
   }catch(e){$('main').innerHTML='<p class="empty">Could not load ('+esc(e.code||e.message)+').</p>';}

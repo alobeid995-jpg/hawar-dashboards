@@ -51,7 +51,7 @@ function show(k){
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.tab===k?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
   ['attendance','discipline','referrals','followups'].forEach(n=>{
     const f=$('frame-'+n);f.hidden=k!==n;
-    if(k===n&&!f.getAttribute('src'))f.src=n+'.html?v=14';
+    if(k===n&&!f.getAttribute('src'))f.src=n+'.html?v=15';
   });
   $('admin').hidden=k!=='admin';$('home').hidden=k!=='home';
   if(k==='home')renderHome();
@@ -88,7 +88,8 @@ service cloud.firestore {
       let d = request.resource.data;
       return d.source == 'form' && d.id == id
         && d.type in ['parent','resit'] && linkOk(d.key, d.type)
-        && d.keys().hasOnly(['key','source','type','id','student','grade','model','teacher','date','subject','reason','approval','makeup','contact','method','outcome','createdAt'])
+        && d.keys().hasOnly(['key','source','type','id','student','grade','model','teacher','date','subject','reason','approval','makeup','contact','method','outcome','createdAt','teacherEmail'])
+        && d.get('teacherEmail','') is string && d.get('teacherEmail','').size() <= 100 && (d.get('teacherEmail','') == '' || d.get('teacherEmail','').matches('.*@.*'))
         && d.student is string && d.student.size() > 0 && d.student.size() <= 120
         && d.teacher is string && d.teacher.size() > 0 && d.teacher.size() <= 80
         && d.grade is string && d.grade.size() <= 6
@@ -110,6 +111,12 @@ service cloud.firestore {
       allow create: if can('followups') || formOk(doc);
     }
     match /formLinks/{k} {
+      allow read, write: if can('followups');
+    }
+    match /teachers/{k} {
+      allow read, write: if can('followups');
+    }
+    match /settings/{k} {
       allow read, write: if can('followups');
     }
     match /referrals/{id} {
