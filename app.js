@@ -1,9 +1,9 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const NAMES={attendance:'Attendance',discipline:'Behavior & Discipline',referrals:'Counselor Referrals'};
-const ICONS={home:'⌂',attendance:'▦',discipline:'⚑',referrals:'✉',admin:'⚙'};
-const BLURB={referrals:'Cases referred by the supervisor to the counselor, with feedback, follow-up status and new-case alerts.',attendance:'Daily and monthly attendance sheets, absence reports, Excel exports and charts for every section.',discipline:'Log incidents and school actions, review the incident log, and get weekly summaries with charts.',admin:'Create accounts, choose who can open each dashboard, reset passwords and load starting data.'};
+const NAMES={attendance:'Attendance',discipline:'Behavior & Discipline',referrals:'Counselor Referrals',followups:'Follow-Ups'};
+const ICONS={home:'⌂',attendance:'▦',discipline:'⚑',referrals:'✉',followups:'☑',admin:'⚙'};
+const BLURB={followups:'Re-sit and make-up exam approvals plus the parent–teacher contact log, with charts and Excel-ready downloads.',referrals:'Cases referred by the supervisor to the counselor, with feedback, follow-up status and new-case alerts.',attendance:'Daily and monthly attendance sheets, absence reports, Excel exports and charts for every section.',discipline:'Log incidents and school actions, review the incident log, and get weekly summaries with charts.',admin:'Create accounts, choose who can open each dashboard, reset passwords and load starting data.'};
 if(!window.FB){document.body.innerHTML='<p style="padding:30px;font:16px sans-serif">The sign-in service could not be loaded. Please refresh the page.</p>';throw new Error('FB missing');}
 let me=null,loaded={};
 const errText=e=>{
@@ -24,7 +24,7 @@ $('loginForm').addEventListener('submit',async e=>{
   finally{btn.disabled=false;}
 });
 FB.onAuth.push((user,profile)=>{
-  if(!user){if(refUnsub){refUnsub();refUnsub=null;}me=null;loaded={};['attendance','discipline','referrals'].forEach(k=>{const f=$('frame-'+k);f.removeAttribute('src');f.hidden=true;});$('admin').innerHTML='';$('home').innerHTML='';$('app').hidden=true;$('login').hidden=false;return;}
+  if(!user){if(refUnsub){refUnsub();refUnsub=null;}me=null;loaded={};['attendance','discipline','referrals','followups'].forEach(k=>{const f=$('frame-'+k);f.removeAttribute('src');f.hidden=true;});$('admin').innerHTML='';$('home').innerHTML='';$('app').hidden=true;$('login').hidden=false;return;}
   if(!profile||profile.error||!profile.access){
     $('login').hidden=true;$('app').hidden=false;$('tabs').innerHTML='';$('who').textContent=user.email||'';$('role').textContent='';
     ['attendance','discipline','admin'].forEach(n=>{const e=$(n==='admin'?'admin':'frame-'+n);if(e)e.hidden=true;});
@@ -49,7 +49,7 @@ function startApp(){
 }
 function show(k){
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.tab===k?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
-  ['attendance','discipline','referrals'].forEach(n=>{
+  ['attendance','discipline','referrals','followups'].forEach(n=>{
     const f=$('frame-'+n);f.hidden=k!==n;
     if(k===n&&!f.getAttribute('src'))f.src=n+'.html';
   });
@@ -86,6 +86,7 @@ service cloud.firestore {
     match /attendanceDays/{doc} { allow read, write: if can('attendance'); }
     match /incidents/{doc} { allow read, write: if can('discipline'); }
     match /disciplineMeta/{doc} { allow read, write: if can('discipline'); }
+    match /followups/{doc} { allow read, write: if can('followups'); }
     match /referrals/{id} {
       allow read: if can('referrals') || can('discipline');
       allow create, delete: if can('discipline');
@@ -103,7 +104,7 @@ async function renderAdmin(){
   const rows=users.sort((a,b)=>(a.email||'').localeCompare(b.email||'')).map(u=>{
     const own=(u.email||'').toLowerCase()===(me.email||'').toLowerCase();
     return '<tr data-uid="'+esc(u.uid)+'" data-email="'+esc(u.email)+'"><td><strong>'+esc(u.name||'')+'</strong><br><span class="muted small">'+esc(u.email||'')+(u.title?' · '+esc(u.title):'')+'</span></td>'+
-    '<td>'+(own?'<span class="tag">Administrator · all dashboards</span>':['attendance','discipline','referrals'].map(a=>'<label style="display:inline-flex;gap:6px;margin-inline-end:12px;align-items:center"><input type="checkbox" style="width:auto" data-a="'+a+'"'+((u.access||[]).includes(a)?' checked':'')+'> '+NAMES[a]+'</label>').join(''))+'</td>'+
+    '<td>'+(own?'<span class="tag">Administrator · all dashboards</span>':['attendance','discipline','referrals','followups'].map(a=>'<label style="display:inline-flex;gap:6px;margin-inline-end:12px;align-items:center"><input type="checkbox" style="width:auto" data-a="'+a+'"'+((u.access||[]).includes(a)?' checked':'')+'> '+NAMES[a]+'</label>').join(''))+'</td>'+
     '<td>'+(own?'':'<button data-act="save">Save</button> <button data-act="reset">Send reset email</button> <button data-act="remove" class="danger">Remove access</button>')+'</td></tr>';
   }).join('');
   if(users.length||!$('ulist').querySelector('.err'))$('ulist').outerHTML='<table><thead><tr><th>User</th><th>Can open</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="3">No users yet.</td></tr>')+'</tbody></table><p id="umsg" class="err small"></p>';
@@ -112,7 +113,7 @@ async function renderAdmin(){
   '<div class="row"><label style="flex:1 1 200px;display:grid">Full name<input id="nn" required placeholder="e.g. Ms. Sara"></label><label style="flex:1 1 200px;display:grid">Title (optional)<input id="nt" placeholder="e.g. Counselor"></label></div>'+
   '<label style="display:grid">Email<input id="ne" type="email" required autocomplete="off" placeholder="name@example.com"></label>'+
   '<label style="display:grid">Password (at least 8 characters)<input id="np" type="text" minlength="8" required autocomplete="off"></label>'+
-  '<div class="row"><strong>Can open:</strong><label><input type="checkbox" id="ca" checked> Attendance</label><label><input type="checkbox" id="cd"> Behavior &amp; Discipline</label><label><input type="checkbox" id="cr"> Counselor Referrals</label></div>'+
+  '<div class="row"><strong>Can open:</strong><label><input type="checkbox" id="ca" checked> Attendance</label><label><input type="checkbox" id="cd"> Behavior &amp; Discipline</label><label><input type="checkbox" id="cr"> Counselor Referrals</label><label><input type="checkbox" id="cf"> Follow-Ups</label></div>'+
   '<div class="row"><button class="primary" id="addBtn">Create account</button><button type="button" id="genpw">Generate password</button></div><p id="addMsg" class="err"></p></form>'+
   '<div class="panel"><h3 style="margin:0">Starting data</h3><p class="muted">Load the first records once into the database (files you keep private). Existing records with the same keys are replaced.</p>'+
   '<div class="row"><label style="display:grid;gap:6px">Attendance file (attendance-seed.json)<input type="file" id="seedAtt" accept=".json"></label><label style="display:grid;gap:6px">Discipline file (discipline-seed.json)<input type="file" id="seedDis" accept=".json"></label><label style="display:grid;gap:6px">Referrals file (referrals-seed.json)<input type="file" id="seedRef" accept=".json"></label></div><p id="seedMsg" class="small"></p></div>'+
@@ -122,7 +123,7 @@ async function renderAdmin(){
   $('genpw').onclick=()=>{$('np').value=genPw();};
   $('addForm').onsubmit=async e=>{
     e.preventDefault();
-    const access=[];if($('ca').checked)access.push('attendance');if($('cd').checked)access.push('discipline');if($('cr').checked)access.push('referrals');
+    const access=[];if($('ca').checked)access.push('attendance');if($('cd').checked)access.push('discipline');if($('cr').checked)access.push('referrals');if($('cf').checked)access.push('followups');
     const msg=$('addMsg');msg.className='err';
     if(!access.length){msg.textContent='Choose at least one dashboard.';return;}
     $('addBtn').disabled=true;msg.textContent='Creating…';
