@@ -1,0 +1,341 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student Reports · Hawar International School</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#172d29;background:#f4f7f5;--green:#126251;--dark:#103b33;--line:#dde7e1;--muted:#526962;--light:#ecf5ef}
+*{box-sizing:border-box}body{margin:0;padding:22px 26px 60px}
+h1,h2,h3{margin:0}button,input,select,textarea{font:inherit;color:inherit}
+.hero{background:radial-gradient(ellipse at 10% 35%,#286e5e 0%,transparent 60%),#12473d;color:#fff;border-radius:20px;padding:28px 30px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.hero small{opacity:.8;font-weight:600}.hero h1{font-size:1.9rem;margin:.2rem 0}.hero p{margin:0;opacity:.85;max-width:62ch}
+.btn{border:1px solid #b9cfc5;background:#fff;border-radius:10px;padding:.5rem .9rem;cursor:pointer;font-weight:600;min-height:2.4rem;color:#103b33}.btn:hover{background:var(--light)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.primary:hover{background:#0e5244}.btn.danger{color:#9a2630;border-color:#e0b4b8}.hero .btn{border-color:transparent}
+.tabs{display:flex;gap:8px;margin:16px 0 4px;flex-wrap:wrap}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:.55rem 1.1rem;font-weight:700;cursor:pointer}.tab[aria-selected=true]{background:var(--green);border-color:var(--green);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px 16px}.card span{color:var(--muted);font-size:.85rem}.card strong{display:block;font-size:1.8rem;color:var(--green)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px 18px;margin:0 0 14px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}.charts .panel h3{font-size:1rem;margin-bottom:8px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.filters label{display:grid;gap:4px;font-weight:600;font-size:.88rem;flex:1 1 150px}
+input,select,textarea{border:1px solid #b9cfc5;border-radius:9px;padding:.45rem .6rem;background:#fff;min-height:2.3rem;width:100%}textarea{min-height:84px;resize:vertical}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:820px}th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--light);font-size:.82rem;color:var(--dark);position:sticky;top:0}
+tr.row{cursor:pointer}tr.row:hover{background:#f6fbf8}
+.pill{display:inline-block;border-radius:999px;padding:.15rem .6rem;font-size:.78rem;font-weight:700;background:#e9eeea;color:#42544d;white-space:nowrap}
+.pill.formp{background:#efe9f8;color:#5a3d84}.pill.newb{background:#b4561b;color:#fff}.pill.Pending{background:#fff0d8;color:#8a5200}.pill.Approved{background:#e1f3e7;color:#1d6a3a}.pill.Rejected{background:#fde4e4;color:#9a2630}.pill.Yes{background:#e2effb;color:#1d4f86}.pill.No{background:#eceff1;color:#4b5a62}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:40ch}.muted{color:var(--muted)}.empty{padding:22px;text-align:center;color:var(--muted)}
+dialog{border:0;border-radius:18px;padding:0;width:min(680px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}dialog::backdrop{background:rgba(10,30,25,.5)}
+.dlg{padding:20px 22px;display:grid;gap:12px;max-height:90vh;overflow:auto}.dlg h2{font-size:1.25rem}.dlg label{display:grid;gap:4px;font-weight:600;font-size:.88rem}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.actions .left{margin-right:auto}
+.namebox{position:relative}.suggest{position:absolute;left:0;right:0;top:100%;z-index:20;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(16,47,42,.18);max-height:240px;overflow:auto;margin-top:3px}.sg{display:flex;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #eef3f0;background:#fff;padding:9px 12px;cursor:pointer}.sg:hover{background:#eaf5ef}.sg b{flex:1;font-weight:600}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#103b33;color:#fff;border-radius:12px;padding:.7rem 1.1rem;z-index:99}
+.mtab{width:100%;min-width:0}.mtab td,.mtab th{padding:.4rem .5rem}.steps{margin:0;padding-left:1.2rem;display:grid;gap:4px}.ntf{font-size:.85rem;background:var(--light);border:1px solid var(--line);border-radius:10px;padding:.5rem .7rem;display:grid;gap:4px}.ntf a{color:var(--green);font-weight:600}
+[hidden]{display:none!important}
+.lk{display:grid;gap:10px}.lk h3{margin:0}.lkrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.lkurl{flex:1 1 100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;background:var(--light);border:1px solid var(--line);border-radius:10px;padding:.55rem .7rem;word-break:break-all;user-select:all}.pill.Active{background:#e1f3e7;color:#1d6a3a}.pill.Paused{background:#fff0d8;color:#8a5200}
+@media(max-width:760px){body{padding:14px}.charts{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.hero h1{font-size:1.5rem}}
+
+.pill.Needs{background:#fde4e4;color:#9a2630}.pill.Mon{background:#fff0d8;color:#8a5200}.pill.Closed{background:#eceff1;color:#4b5a62}.pill.v1{background:#e2effb;color:#1d4f86}.pill.v2{background:#fff0d8;color:#8a5200}.pill.v3{background:#fde4e4;color:#9a2630}
+.alertbox{background:#fdecec;border:1px solid #e8b4b8;color:#7d1d27;border-radius:14px;padding:12px 16px;margin:14px 0 0;display:grid;gap:8px}.alertbox button{border:1px solid #e0b4b8;background:#fff;color:#9a2630;border-radius:999px;padding:.3rem .8rem;font-weight:700;cursor:pointer;margin:0 6px 6px 0}
+.dots{display:inline-flex;gap:3px;vertical-align:middle}.dots i{width:11px;height:11px;border-radius:50%;background:#dbe6df;display:inline-block}.dots i.on{background:#c0392b}.dots i.on.y{background:#d49a14}
+.rt{display:inline-block;border-radius:8px;padding:.15rem .45rem;font-size:.78rem;font-weight:700;color:#fff}.rt-Excellent{background:#1d8a4a}.rt-Good{background:#5fa83a}.rt-Acceptable{background:#d49a14}.rt-Weak{background:#c0392b}
+.sub{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.sub label{display:grid;gap:4px;font-weight:600;font-size:.88rem}.sub .grow{flex:1 1 220px}
+.acts{display:grid;gap:6px}.acts label{display:flex;gap:8px;align-items:center;font-weight:400}.acts input[type=checkbox]{width:auto;min-height:0}.dlg.wide{width:100%}dialog.wide{width:min(900px,96vw)}
+.small{font-size:.84rem}.rep{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:4px}.rep.closed{opacity:.65}.rep header{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tabs .tab .badge{background:#c0392b;color:#fff;border-radius:999px;padding:0 .45rem;margin-left:.4rem;font-size:.78rem}
+</style></head><body>
+<div class="hero"><div><small>Middle School · Boys Section</small><h1>Student Reports</h1><p>Blue Reports for student violations with supervisor alerts, and Daily Observation per student, filled by teachers through private links.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="addBtn">＋ Add blue report</button></div></div>
+<div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="blue" aria-selected="true">Blue Reports<span class="badge" id="bBadge" hidden></span></button><button class="tab" role="tab" data-tab="obs" aria-selected="false">Daily Observation</button></div>
+<section class="panel" id="linkPanel" style="margin-top:14px" hidden></section>
+<main id="main" aria-busy="true"><p class="empty">Loading…</p></main>
+<dialog id="cDlg" class="wide"><div class="dlg" id="cBox"></div></dialog>
+<dialog id="dlg"><form class="dlg" id="form"></form></dialog>
+<div id="toast" hidden></div>
+<script>/* Shared SVG chart helpers: Viz.pie (donut + legend) and Viz.bars (vertical, grouped) */
+const Viz=(()=>{
+ const PAL=['#126251','#e0a526','#3f7fb8','#c24d5b','#7a5aa8','#2fa58a','#d9772b','#6b7f8c','#9ac34a','#b5517f'];
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const nf=new Intl.NumberFormat('en-GB',{maximumFractionDigits:1});
+ if(!document.getElementById('viz-css')){const st=document.createElement('style');st.id='viz-css';st.textContent=
+ '.viz-pie{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.viz-pie svg{width:176px;height:176px;flex:0 0 auto}'+
+ '.viz-legend{list-style:none;margin:0;padding:0;display:grid;gap:7px;flex:1 1 160px;min-width:0;font-size:14px}'+
+ '.viz-legend li{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center}.viz-legend i{width:12px;height:12px;border-radius:4px;display:block}'+
+ '.viz-legend span{overflow-wrap:anywhere}.viz-legend b{font-variant-numeric:tabular-nums;white-space:nowrap}.viz-legend em{font-style:normal;opacity:.65;font-weight:400}'+
+ '.viz-bars{overflow-x:auto;padding-bottom:4px}.viz-bars svg{display:block;min-width:100%;height:auto}'+
+ '.viz-key{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:0 0 6px}.viz-key span{display:inline-flex;gap:6px;align-items:center}.viz-key i{width:11px;height:11px;border-radius:3px;display:inline-block}'+
+ '.viz-empty{opacity:.7;margin:8px 0}.viz-title{font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;opacity:.65;margin:0 0 10px}'+
+ '.viz-pair{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}@media(max-width:820px){.viz-pair{grid-template-columns:1fr}}';
+ document.head.appendChild(st);}
+ /* items:[{label,value,color?}] */
+ function pie(items,o={}){
+  items=items.filter(i=>i.value>0);
+  const total=items.reduce((a,i)=>a+i.value,0);
+  if(!total)return '<p class="viz-empty">No data for this selection.</p>';
+  const R=62,C=2*Math.PI*R;let off=0;
+  const segs=items.map((it,k)=>{
+   const color=it.color||PAL[k%PAL.length],len=C*it.value/total;
+   const s='<circle cx="88" cy="88" r="'+R+'" fill="none" stroke="'+color+'" stroke-width="32" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 88 88)"><title>'+esc(it.label)+': '+nf.format(it.value)+' ('+nf.format(100*it.value/total)+'%)</title></circle>';
+   off+=len;it._c=color;return s;
+  }).join('');
+  const center=o.center??nf.format(total);
+  const svg='<svg viewBox="0 0 176 176" role="img" aria-label="Pie chart"><circle cx="88" cy="88" r="'+R+'" fill="none" stroke="#e6eee9" stroke-width="32"/>'+segs+
+   '<text x="88" y="86" text-anchor="middle" font-size="22" font-weight="700" fill="currentColor">'+esc(center)+'</text><text x="88" y="106" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">'+esc(o.centerLabel||'total')+'</text></svg>';
+  const legend='<ul class="viz-legend">'+items.map(it=>'<li><i style="background:'+it._c+'"></i><span>'+esc(it.label)+'</span><b>'+nf.format(it.value)+' <em>'+nf.format(100*it.value/total)+'%</em></b></li>').join('')+'</ul>';
+  return '<div class="viz-pie">'+svg+legend+'</div>';
+ }
+ /* labels:[..]; series:[{name,color,values:[..]}]; o:{fmt,max} */
+ function bars(labels,series,o={}){
+  const n=labels.length;
+  if(!n||!series.some(s=>s.values.some(v=>v>0)))return '<p class="viz-empty">No data for this selection.</p>';
+  const fmt=o.fmt||(v=>nf.format(v));
+  const max0=Math.max(...series.flatMap(s=>s.values),0);
+  const top=o.max||niceMax(max0);
+  let gw=Math.max(series.length*20+14,46),W=Math.max(320,n*gw+54),H=240,PL=44,PB=0,PT=22,ph=H-PB-PT;
+  const rot=n>7||labels.some(l=>String(l).length>9);
+  PB=rot?Math.min(14,Math.max(...labels.map(l=>String(l).length)))*5.6+26:40;ph=H-PB-PT;
+  let g='';
+  for(let t=0;t<=4;t++){const y=PT+ph-ph*t/4;g+='<line x1="'+PL+'" x2="'+(W-6)+'" y1="'+y+'" y2="'+y+'" stroke="#dbe6df" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="currentColor" opacity=".65">'+fmt(top*t/4)+'</text>';}
+  const slot=(W-PL-6)/n,bw=Math.min(26,(slot-8)/series.length);
+  let b='';
+  labels.forEach((lab,i)=>{
+   const cx=PL+slot*i+slot/2,x0=cx-bw*series.length/2;
+   series.forEach((s,k)=>{
+    const v=s.values[i]||0,h=ph*Math.min(v,top)/top,x=x0+k*bw,y=PT+ph-h;
+    b+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+(bw-2).toFixed(1)+'" height="'+Math.max(h,v>0?2:0).toFixed(1)+'" rx="4" fill="'+s.color+'"><title>'+esc(lab)+' · '+esc(s.name)+': '+fmt(v)+'</title></rect>';
+    if(series.length===1&&n<=16&&v>0)b+='<text x="'+(x+bw/2-1).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">'+fmt(v)+'</text>';
+   });
+   const text=String(lab),short=text.length>14?text.slice(0,13)+'…':text,ly=PT+ph+16;
+   b+=rot?'<text transform="translate('+cx.toFixed(1)+' '+ly+') rotate(-38)" text-anchor="end" font-size="11" fill="currentColor"><title>'+esc(text)+'</title>'+esc(short)+'</text>':'<text x="'+cx.toFixed(1)+'" y="'+ly+'" text-anchor="middle" font-size="11" fill="currentColor">'+esc(short)+'</text>';
+  });
+  const key=series.length>1?'<div class="viz-key">'+series.map(s=>'<span><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span>').join('')+'</div>':'';
+  return key+'<div class="viz-bars"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;min-width:'+W+'px;max-width:'+Math.round(W*1.4)+'px" role="img" aria-label="Bar chart">'+g+b+'</svg></div>';
+ }
+ function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v))),m=v/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;}
+ return {pie,bars,PAL,esc};
+})();
+</script>
+<script src="config.js?v=17"></script><script src="fb.bundle.js?v=17"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=new Intl.NumberFormat('en-GB');
+const fmt=d=>{if(!d)return '';const x=new Date(d+'T00:00:00Z');return isNaN(x)?d:new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(x);};
+const fmtS=d=>{if(!d)return '';const x=new Date(d+'T00:00:00Z');return isNaN(x)?d:new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',timeZone:'UTC'}).format(x);};
+const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bahrain'}).format(new Date());
+const norm=v=>String(v||'').normalize('NFKD').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+const GRADES='6B 6M 6S 6Y 6G 6R 7B 7M 7S 7Y 7G 7R 8B 8M 8S 8Y 8G 8R 8L 9B 9M 9S 9Y 9G 9R 10B 10M 10S 10Y 10G 10R 10L 11B 11S 11Y 11IB 11L 12B 12S 12Y 12IB 12R 12L'.split(' ');
+const PERIODS=['1','2','3','4','5','6'];
+const ORD={1:'1st',2:'2nd',3:'3rd'};
+const SUP=['Warning the student','Verbal agreement','Written agreement','Informing parents by phone','After-school detention','Out-of-school detention','Discipline committee','Refer to the counsellor'];
+const CRIT=[['r1','On time'],['r2','Follows instructions'],['r3','Respect'],['r4','Behaviour'],['r5','Classwork']];
+const SCORE={Excellent:4,Good:3,Acceptable:2,Weak:1};
+let tab='blue',blue=[],obs=[],links=[],roster=[],linkErr='',toastT,pickedStu=null,fil={q:'',grade:'',status:'active'},canEdit=true;
+const toast=m=>{const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4500);};
+const countBy=(list,f)=>{const m={};list.forEach(r=>{const k=f(r)||'Unspecified';m[k]=(m[k]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
+const pie=(list,f,label)=>Viz.pie(countBy(list,f).map(([label,value])=>({label,value})),{centerLabel:label});
+const bars=(list,f,name,color)=>{const e=countBy(list,f).slice(0,10);return Viz.bars(e.map(x=>x[0]),[{name,color:color||'#126251',values:e.map(x=>x[1])}]);};
+const monthBars=(list,name)=>{const m={};list.forEach(r=>{const k=(r.date||'').slice(0,7);if(k)m[k]=(m[k]||0)+1;});const ks=Object.keys(m).sort();return Viz.bars(ks.map(k=>new Intl.DateTimeFormat('en-GB',{month:'short',year:'2-digit',timeZone:'UTC'}).format(new Date(k+'-01'))),[{name,color:'#126251',values:ks.map(k=>m[k])}]);};
+
+/* ---------- shared: public links ---------- */
+const base=()=>location.origin+location.pathname.replace(/[^/]*$/,'')+'form.html';
+const linkUrl=l=>base()+'?t='+l.type+'&k='+encodeURIComponent(l.key)+(l.type==='obs'?'&s='+encodeURIComponent(l.student||'')+'&g='+encodeURIComponent(l.grade||''):'');
+const latestLink=(type,student)=>links.filter(l=>l.type===type&&(student===undefined||norm(l.student)===norm(student))).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
+async function copy(text,box){try{await navigator.clipboard.writeText(text);toast('Link copied.');}catch{if(box){const r=document.createRange();r.selectNodeContents(box);const s=getSelection();s.removeAllRanges();s.addRange(r);}toast('Select and copy the link.');}}
+function drawBlueLink(){
+  const box=$('linkPanel');
+  if(tab!=='blue'||!canEdit){box.hidden=true;return;}
+  box.hidden=false;const l=latestLink('blue');
+  if(linkErr){box.innerHTML='<div class="lk"><h3>Teacher link</h3><p class="muted">Links could not be loaded ('+esc(linkErr)+'). Publish the latest database rules, then reload.</p></div>';return;}
+  let h='<div class="lk"><h3>Teacher link · Blue report form</h3>';
+  if(!l)h+='<p class="muted">No link yet. Generate one and send it to teachers: they report a violation without signing in, and it appears here.</p><div class="lkrow"><button class="btn primary" id="lkGen">Generate link</button></div>';
+  else h+='<div class="lkrow"><span class="pill '+(l.active?'Active':'Paused')+'">'+(l.active?'Active':'Paused')+'</span><span class="muted">'+(l.active?'Anyone with this link can submit.':'Paused: nobody can open or submit through this link.')+'</span></div><div class="lkurl" id="lkUrl">'+esc(linkUrl(l))+'</div><div class="lkrow"><button class="btn" id="lkCopy">Copy link</button>'+(l.active?'<button class="btn" id="lkPause">Pause link</button>':'<button class="btn primary" id="lkResume">Resume link</button>')+'<button class="btn" id="lkGen">Generate new link</button></div>';
+  box.innerHTML=h+'</div>';
+  const on=(id,f)=>{if($(id))$(id).onclick=async()=>{try{await f();}catch(e){toast('Could not do that ('+(e.code||e.message)+').');}};};
+  on('lkGen',async()=>{if(l&&!confirm('Generate a new link? The current link will stop working.'))return;await FB.createFormLink('blue',links);toast('New link is ready.');});
+  on('lkPause',async()=>{await FB.setFormLinkActive(l.key,false);toast('Link paused.');});
+  on('lkResume',async()=>{await FB.setFormLinkActive(l.key,true);toast('Link is active again.');});
+  on('lkCopy',()=>copy(linkUrl(l),$('lkUrl')));
+}
+
+/* ---------- Blue reports ---------- */
+const ts=r=>(r.date||'')+' '+String(r.createdAt||0).padStart(15,'0');
+function buildCases(){
+  const m=new Map();
+  blue.forEach(r=>{const k=norm(r.student);if(!k)return;const c=m.get(k)||{key:k,name:r.student,grade:'',reports:[]};c.reports.push(r);if(r.grade)c.grade=r.grade;m.set(k,c);});
+  return [...m.values()].map(c=>{
+    c.reports.sort((a,b)=>ts(a).localeCompare(ts(b)));
+    c.open=c.reports.filter(r=>!r.closedAt);c.max=Math.max(0,...c.open.map(r=>+r.vno||1));
+    c.flag=c.open.length>=3||c.max>=3;
+    c.status=c.flag?'Needs':c.open.length?'Mon':'Closed';
+    c.isNew=c.open.some(r=>r.source==='form'&&!r.reviewed);
+    c.last=c.reports.reduce((a,r)=>(r.date||'')>a?r.date:a,'');
+    c.teachers=[...new Set(c.reports.map(r=>r.teacher).filter(Boolean))];
+    return c;
+  });
+}
+const dotsFor=c=>'<span class="dots">'+[1,2,3].map(i=>'<i class="'+(i<=Math.min(c.open.length,3)?'on'+(c.open.length<3&&c.max<3?' y':''):'')+'"></i>').join('')+'</span> '+c.open.length+'/3';
+function drawBlue(){
+  const cases=buildCases(),flagged=cases.filter(c=>c.flag);
+  const bb=$('bBadge');bb.hidden=!flagged.length;bb.textContent=flagged.length;
+  const mon=cases.filter(c=>c.status==='Mon'),closedGroups=new Set(blue.filter(r=>r.caseId).map(r=>r.caseId)).size;
+  const mth=blue.filter(r=>(r.date||'').slice(0,7)===today().slice(0,7)).length;
+  const cards=[['Need supervisor',flagged.length],['Being monitored',mon.length],['Reports (all time)',blue.length],['This month',mth],['Cases closed',closedGroups]];
+  const q=norm(fil.q).split(' ').filter(Boolean);
+  let rows=cases.filter(c=>(fil.status==='all'||(fil.status==='active'?c.status!=='Closed':c.status===fil.status))&&(!fil.grade||c.grade===fil.grade)&&(!q.length||q.every(w=>c.key.includes(w))));
+  rows.sort((a,b)=>(b.flag-a.flag)||(b.isNew-a.isNew)||b.last.localeCompare(a.last));
+  const grades=[...new Set(cases.map(c=>c.grade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'en',{numeric:true}));
+  const ch=blue.length?'<div class="charts">'+[['Violation number',pie(blue.map(r=>({...r,v:ORD[r.vno]||'1st'})),r=>r.v,'reports')],['By class',bars(blue,r=>r.grade,'Reports','#3f7fb8')],['By teacher',bars(blue,r=>r.teacher,'Reports','#3f7fb8')],['By period',bars(blue,r=>r.period?'P'+r.period:'','Reports','#b4561b')],['Reports per month',monthBars(blue,'Reports')]].map(([t,h])=>'<div class="panel"><h3>'+t+'</h3>'+h+'</div>').join('')+'</div>':'';
+  $('main').innerHTML=(flagged.length?'<div class="alertbox"><strong>⚠ '+flagged.length+' student'+(flagged.length===1?'':'s')+' need'+(flagged.length===1?'s':'')+' the supervisor\'s action</strong><div>'+flagged.map(c=>'<button data-case="'+esc(c.key)+'">'+esc(c.name)+' · '+c.open.length+' report'+(c.open.length===1?'':'s')+(c.max>=3?' · 3rd violation':'')+'</button>').join('')+'</div></div>':'')+
+   '<div class="cards">'+cards.map(([l,v])=>'<div class="card"><span>'+l+'</span><strong>'+nf.format(v)+'</strong></div>').join('')+'</div>'+ch+
+   '<section class="panel" style="margin-top:14px"><div class="filters"><label>Search by student<input id="fq" type="search" value="'+esc(fil.q)+'" placeholder="Type part of the name"></label>'+
+   '<label>Class<select id="fg"><option value="">All</option>'+grades.map(g=>'<option'+(fil.grade===g?' selected':'')+'>'+esc(g)+'</option>').join('')+'</select></label>'+
+   '<label>Show<select id="fs">'+[['active','Needs action + monitoring'],['Needs','Needs supervisor'],['Mon','Monitoring'],['Closed','Closed'],['all','All']].map(([v,l])=>'<option value="'+v+'"'+(fil.status===v?' selected':'')+'>'+l+'</option>').join('')+'</select></label>'+
+   '<button class="btn" id="fclear">Clear</button><button class="btn" id="csv">⬇ Download (Excel)</button></div></section>'+
+   '<section class="panel"><div class="tablewrap">'+(rows.length?'<table><thead><tr><th>Student</th><th>Open reports</th><th>Highest</th><th>Last report</th><th>Teachers</th><th>Status</th></tr></thead><tbody>'+rows.map(c=>'<tr class="row" data-case="'+esc(c.key)+'"><td><strong>'+esc(c.name)+'</strong>'+(c.isNew?' <span class="pill newb">NEW · form</span>':'')+'<br><span class="muted">'+esc(c.grade)+'</span></td><td>'+dotsFor(c)+'</td><td>'+(c.max?'<span class="pill v'+c.max+'">'+ORD[c.max]+'</span>':'–')+'</td><td>'+fmt(c.last)+'</td><td><div class="clamp">'+esc(c.teachers.join(', '))+'</div></td><td><span class="pill '+c.status+'">'+({Needs:'Needs supervisor',Mon:'Monitoring',Closed:'Closed'})[c.status]+'</span></td></tr>').join('')+'</tbody></table>':'<p class="empty">'+(blue.length?'No students match.':'No reports yet. Generate the teacher link above to start receiving reports.')+'</p>')+'</div></section>';
+  $('main').removeAttribute('aria-busy');
+  $('fq').oninput=e=>{fil.q=e.target.value;const p=e.target.selectionStart;drawBlue();const x=$('fq');x.focus();x.setSelectionRange(p,p);};
+  $('fg').onchange=e=>{fil.grade=e.target.value;drawBlue();};$('fs').onchange=e=>{fil.status=e.target.value;drawBlue();};
+  $('fclear').onclick=()=>{fil={q:'',grade:'',status:'active'};drawBlue();};
+  $('csv').onclick=()=>csvBlue();
+  document.querySelectorAll('[data-case]').forEach(el=>el.onclick=()=>openCase(el.dataset.case));
+}
+function csvOut(name,head,lines){
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const blob=new Blob(['﻿'+[head.map(q).join(',')].concat(lines.map(r=>r.map(q).join(','))).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'-'+today()+'.csv';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function csvBlue(){
+  csvOut('blue-reports',['Date','Period','Student','Class','Violation no.','Teacher','Description','Advised student','Called/met parent','Other action','Status','Supervisor action','Supervisor note','Closed on'],
+   [...blue].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(r=>[r.date,r.period,r.student,r.grade,r.vno,r.teacher,r.description,r.actTalk?'Yes':'',r.actParent?'Yes':'',r.actOther,r.closedAt?'Closed':'Open',(r.supervisorActions||[]).join('; '),r.supervisorNote,r.closedAt?new Date(r.closedAt).toLocaleDateString('en-GB'):'']));
+}
+function openCase(key){
+  const c=buildCases().find(x=>x.key===key);if(!c)return;
+  const form=c.reports.filter(r=>r.source==='form'&&!r.reviewed).map(r=>r.id);
+  if(form.length)FB.patchBlue(form,{reviewed:true}).catch(()=>{});
+  const rep=r=>'<div class="rep'+(r.closedAt?' closed':'')+'"><header><span class="pill v'+(r.vno||1)+'">'+(ORD[r.vno]||'1st')+' violation</span><strong>'+fmt(r.date)+(r.period?' · Period '+esc(r.period):'')+'</strong><span class="muted">'+esc(r.teacher)+'</span>'+(r.source==='form'?'<span class="pill formp">form</span>':'')+(r.closedAt?'<span class="pill Closed">closed</span>':'')+'<span style="margin-left:auto"><button class="btn danger" data-del="'+esc(r.id)+'" title="Delete this report">🗑</button></span></header><div>'+esc(r.description)+'</div><div class="small muted">Teacher action: '+([r.actTalk?'advised the student':'',r.actParent?'called/met parent':'',r.actOther||''].filter(Boolean).join(' · ')||'none recorded')+'</div></div>';
+  const groups=new Map();c.reports.filter(r=>r.closedAt).forEach(r=>{const k=r.caseId||('t'+r.closedAt);(groups.get(k)||groups.set(k,[]).get(k)).push(r);});
+  const hist=[...groups.values()].map(g=>{const r=g[0];return '<div class="ntf"><div>✔ Case closed on <strong>'+new Date(r.closedAt).toLocaleDateString('en-GB')+'</strong> ('+g.length+' report'+(g.length===1?'':'s')+')'+(r.closedBy?' by '+esc(r.closedBy):'')+'</div><div>Action: '+esc((r.supervisorActions||[]).join('; ')||'—')+'</div>'+(r.supervisorNote?'<div>Note: '+esc(r.supervisorNote)+'</div>':'')+'<div><a href="#" data-reopen="'+esc(r.caseId||'')+'" data-ids="'+g.map(x=>x.id).join(',')+'">Reopen this case</a></div></div>';}).join('');
+  $('cBox').innerHTML='<h2>'+esc(c.name)+' <span class="muted" style="font-weight:400;font-size:.95rem">'+esc(c.grade)+'</span></h2>'+
+   (c.flag?'<div class="alertbox" style="margin:0"><strong>⚠ '+(c.max>=3?'Third violation reported':'3 open reports')+': the supervisor needs to act.</strong></div>':'')+
+   '<h3 style="margin:4px 0 0">Open reports ('+c.open.length+')</h3>'+(c.open.length?c.open.map(rep).join(''):'<p class="muted" style="margin:0">No open reports.</p>')+
+   (c.open.length?'<h3 style="margin:8px 0 0">Supervisor action</h3><div class="acts" id="acts">'+SUP.map((a,i)=>'<label><input type="checkbox" value="'+esc(a)+'"> '+(i+1)+'. '+esc(a)+(a==='Out-of-school detention'?' <input id="detDays" placeholder="days" style="width:90px;min-height:0;padding:.25rem .4rem">':'')+'</label>').join('')+'</div><label style="display:grid;gap:4px;font-weight:600;font-size:.88rem">Note (optional)<textarea id="supNote" maxlength="1000"></textarea></label><p class="muted small" style="margin:0">Recording an action closes all open reports for this student, and the count starts again from 1.</p>':'')+
+   (groups.size?'<h3 style="margin:8px 0 0">History</h3>'+hist+'<details><summary class="muted small">Closed reports</summary><div style="display:grid;gap:8px;margin-top:8px">'+c.reports.filter(r=>r.closedAt).map(rep).join('')+'</div></details>':'')+
+   '<p id="cErr" class="err small" style="color:#9a2630;margin:0"></p><div class="actions"><button class="btn left" id="cAdd">＋ Add a report for this student</button><button class="btn" id="cClose">Close window</button>'+(c.open.length?'<button class="btn primary" id="cSave">Record action &amp; close case</button>':'')+'</div>';
+  const dlg=$('cDlg');if(!dlg.open)dlg.showModal();
+  $('cClose').onclick=()=>dlg.close();
+  $('cAdd').onclick=()=>{dlg.close();openAdd({student:c.name,grade:c.grade});};
+  $('cBox').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this report permanently?'))return;try{await FB.deleteBlue(b.dataset.del);blue=blue.filter(x=>x.id!==b.dataset.del);drawBlue();if(buildCases().some(x=>x.key===key))openCase(key);else dlg.close();}catch(e){$('cErr').textContent='Could not delete ('+(e.code||e.message)+').';}});
+  $('cBox').querySelectorAll('[data-reopen]').forEach(a=>a.onclick=async e=>{e.preventDefault();if(!confirm('Reopen these reports? They count again toward the 3 reports.'))return;try{const ids=a.dataset.ids.split(',');await FB.patchBlue(ids,{closedAt:null,caseId:null,supervisorActions:[],supervisorNote:'',closedBy:''});ids.forEach(id=>{const r=blue.find(x=>x.id===id);if(r){r.closedAt=null;}});drawBlue();openCase(key);}catch(x){$('cErr').textContent='Could not reopen ('+(x.code||x.message)+').';}});
+  if($('cSave'))$('cSave').onclick=async()=>{
+    const acts=[...document.querySelectorAll('#acts input[type=checkbox]:checked')].map(i=>i.value+(i.value==='Out-of-school detention'&&$('detDays').value.trim()?' ('+$('detDays').value.trim()+' days)':''));
+    if(!acts.length){$('cErr').textContent='Tick at least one action taken by the supervisor.';return;}
+    $('cSave').disabled=true;
+    try{
+      const me=FB.profile()||{};
+      await FB.patchBlue(c.open.map(r=>r.id),{closedAt:Date.now(),closedBy:me.name||me.email||'',caseId:'c'+Date.now().toString(36),supervisorActions:acts,supervisorNote:$('supNote').value.trim(),reviewed:true});
+      dlg.close();toast('Action recorded. The case is closed.');
+    }catch(e){$('cErr').textContent='Could not save ('+(e.code||e.message)+').';$('cSave').disabled=false;}
+  };
+}
+const sel=(name,list,val,req,blank)=>'<select name="'+name+'"'+(req?' required':'')+'>'+(blank?'<option value="">Select…</option>':'')+list.map(o=>'<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>';
+function suggestHTML(){return '<div class="suggest" hidden></div>';}
+function attachSuggest(input,box,onPick){
+  const pool=()=>{const m=new Map();roster.forEach(s=>m.set(norm(s.name),s));blue.concat(obs).forEach(x=>{if(x.student&&!m.has(norm(x.student)))m.set(norm(x.student),{name:x.student,group:x.grade});});return [...m.values()];};
+  input.addEventListener('input',()=>{
+    const q=norm(input.value).split(' ').filter(Boolean);
+    if(q.join('').length<3){box.hidden=true;return;}
+    const res=pool().filter(s=>{const k=norm(s.name).split(' ');return q.every(w=>k.some(x=>x.startsWith(w)));}).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,30);
+    if(!res.length){box.hidden=true;return;}
+    box.innerHTML=res.map((s,i)=>'<button type="button" class="sg" data-i="'+i+'"><b>'+esc(s.name)+'</b><span class="muted">'+esc(s.group||'')+'</span></button>').join('');box._l=res;box.hidden=false;
+  });
+  box.addEventListener('click',e=>{const b=e.target.closest('.sg');if(!b)return;const s=box._l[+b.dataset.i];input.value=s.name;box.hidden=true;onPick(s);});
+}
+function openAdd(pre){
+  const r=pre||{};
+  $('form').innerHTML='<h2>New blue report</h2><label class="namebox">Student name<input name="student" id="fStu" autocomplete="off" required value="'+esc(r.student||'')+'" placeholder="Type 3 letters of the name">'+suggestHTML()+'</label>'+
+   '<div class="grid2"><label>Class'+sel('grade',GRADES,r.grade,true,true)+'</label><label>Violation number<select name="vno" required><option value="1">1 – First</option><option value="2">2 – Second</option><option value="3">3 – Third</option></select></label></div>'+
+   '<div class="grid2"><label>Date<input type="date" name="date" required value="'+today()+'"></label><label>Period'+sel('period',PERIODS,'',true,true)+'</label></div>'+
+   '<label>Teacher<input name="teacher" required maxlength="80"></label><label>What happened<textarea name="description" required maxlength="1500"></textarea></label>'+
+   '<p id="fErr" style="color:#9a2630;margin:0"></p><div class="actions"><button type="button" class="btn" id="fCancel">Cancel</button><button class="btn primary" id="fSave">Save</button></div>';
+  $('dlg').showModal();$('fCancel').onclick=()=>$('dlg').close();
+  attachSuggest($('fStu'),$('form').querySelector('.suggest'),s=>{if(s.group){const g=$('form').elements.grade;if([...g.options].some(o=>o.value===s.group))g.value=s.group;}});
+  $('form').onsubmit=async e=>{
+    e.preventDefault();const f=new FormData(e.target),rec={source:'admin',reviewed:true};
+    for(const [k,v] of f.entries())rec[k]=String(v).trim();rec.student=rec.student.toUpperCase();
+    $('fSave').disabled=true;
+    try{await FB.saveBlue(rec);$('dlg').close();toast('Report added.');}catch(x){$('fErr').textContent='Could not save ('+(x.code||x.message)+').';$('fSave').disabled=false;}
+  };
+}
+
+/* ---------- Daily observation ---------- */
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+const entryScore=r=>avg(CRIT.map(([k])=>SCORE[r[k]]).filter(Boolean));
+const scoreLabel=v=>v>=3.5?'Excellent':v>=2.5?'Good':v>=1.5?'Acceptable':v>0?'Weak':'–';
+function obsStudents(){
+  const m=new Map();
+  links.filter(l=>l.type==='obs').forEach(l=>{const k=norm(l.student);const o=m.get(k)||{key:k,name:l.student,grade:l.grade||'',link:null,entries:[]};if(!o.link||(l.createdAt||0)>(o.link.createdAt||0))o.link=l;m.set(k,o);});
+  obs.forEach(r=>{const k=norm(r.student);if(!k)return;const o=m.get(k)||{key:k,name:r.student,grade:r.grade||'',link:null,entries:[]};o.entries.push(r);m.set(k,o);});
+  return [...m.values()].map(o=>{o.entries.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(+b.period||0)-(+a.period||0));o.avg=avg(o.entries.map(entryScore).filter(Boolean));o.last=o.entries[0]?o.entries[0].date:'';return o;}).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function drawObs(){
+  const st=obsStudents(),week=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
+  const cards=[['Monitored students',st.filter(s=>s.link).length],['Entries (all time)',obs.length],['Entries last 7 days',obs.filter(r=>(r.date||'')>=week).length],['Average score',obs.length?avg(obs.map(entryScore).filter(Boolean)).toFixed(1)+' / 4':'–']];
+  let h='<div class="cards">'+cards.map(([l,v])=>'<div class="card"><span>'+l+'</span><strong>'+v+'</strong></div>').join('')+'</div>';
+  h+='<section class="panel" style="margin-top:14px"><h3 style="margin:0 0 6px">Add a student to daily observation</h3><p class="muted" style="margin:0 0 10px">Each student gets a private link. Send it to the teachers who teach him; each teacher opens it during the lesson, picks the period and ticks the ratings.</p><form class="sub" id="oAdd"><label class="grow namebox">Student name<input id="oStu" autocomplete="off" required placeholder="Type 3 letters of the name">'+suggestHTML()+'</label><label>Class<select id="oGr"><option value="">Select…</option>'+GRADES.map(g=>'<option>'+g+'</option>').join('')+'</select></label><button class="btn primary" id="oGo">Generate link</button></form></section>';
+  h+='<section class="panel"><div class="tablewrap">'+(st.length?'<table><thead><tr><th>Student</th><th>Link</th><th>Entries</th><th>Average</th><th>Last entry</th><th></th></tr></thead><tbody>'+st.map(s=>'<tr data-s="'+esc(s.key)+'" class="orow'+(pickedStu===s.key?' sel':'')+'"><td><strong>'+esc(s.name)+'</strong><br><span class="muted">'+esc(s.grade)+'</span></td><td>'+(s.link?'<span class="pill '+(s.link.active?'Active':'Paused')+'">'+(s.link.active?'Active':'Paused')+'</span>':'<span class="muted">none</span>')+'</td><td>'+s.entries.length+'</td><td>'+(s.entries.length?'<span class="rt rt-'+scoreLabel(s.avg)+'">'+s.avg.toFixed(1)+' · '+scoreLabel(s.avg)+'</span>':'–')+'</td><td>'+fmt(s.last)+'</td><td style="white-space:nowrap"><button class="btn" data-act="view">View</button> '+(s.link?'<button class="btn" data-act="copy">Copy link</button> <button class="btn" data-act="'+(s.link.active?'pause':'resume')+'">'+(s.link.active?'Pause':'Resume')+'</button> <button class="btn" data-act="new">New link</button> <button class="btn danger" data-act="rm" title="Remove link">✕</button>':'<button class="btn" data-act="new">Generate link</button>')+'</td></tr>').join('')+'</tbody></table>':'<p class="empty">No students yet. Add one above.</p>')+'</div></section>';
+  const cur=st.find(s=>s.key===pickedStu);
+  if(cur)h+=obsDetail(cur);
+  $('main').innerHTML=h;$('main').removeAttribute('aria-busy');
+  attachSuggest($('oStu'),$('oAdd').querySelector('.suggest'),s=>{if(s.group&&[...$('oGr').options].some(o=>o.value===s.group))$('oGr').value=s.group;});
+  $('oAdd').onsubmit=async e=>{e.preventDefault();const name=$('oStu').value.trim().toUpperCase();if(!name)return;const ex=latestLink('obs',name);if(ex&&!confirm('This student already has a link. Generate a new one? The old link will stop working.'))return;
+    try{await FB.createFormLink('obs',links,{student:name,grade:$('oGr').value});pickedStu=norm(name);toast('Link ready. Use Copy link in the table.');}catch(x){toast('Could not create the link ('+(x.code||x.message)+').');}};
+  document.querySelectorAll('.orow button').forEach(b=>b.onclick=async e=>{
+    e.stopPropagation();const k=b.closest('tr').dataset.s,s=st.find(x=>x.key===k),act=b.dataset.act;
+    try{
+      if(act==='view'){pickedStu=pickedStu===k?null:k;drawObs();return;}
+      if(act==='copy'){await copy(linkUrl(s.link));return;}
+      if(act==='pause'){await FB.setFormLinkActive(s.link.key,false);toast('Link paused.');}
+      if(act==='resume'){await FB.setFormLinkActive(s.link.key,true);toast('Link is active again.');}
+      if(act==='new'){if(s.link&&!confirm('Generate a new link? The current link will stop working.'))return;await FB.createFormLink('obs',links,{student:s.name,grade:s.grade});toast('New link is ready.');}
+      if(act==='rm'){if(!confirm('Remove the link for '+s.name+'? Entries already received stay.'))return;await FB.deleteFormLink(s.link.key);toast('Link removed.');}
+    }catch(x){toast('Could not do that ('+(x.code||x.message)+').');}
+  });
+  if(cur)wireDetail(cur);
+}
+function obsDetail(s){
+  const E=s.entries;
+  if(!E.length)return '<section class="panel"><h3>'+esc(s.name)+'</h3><p class="muted">No observations received yet.</p></section>';
+  const byDate={};E.forEach(r=>{(byDate[r.date]=byDate[r.date]||[]).push(entryScore(r));});
+  const ds=Object.keys(byDate).sort().slice(-14);
+  const crit=CRIT.map(([k,l])=>[l,avg(E.map(r=>SCORE[r[k]]).filter(Boolean))]);
+  const weak=crit.filter(c=>c[1]>0).sort((a,b)=>a[1]-b[1])[0];
+  const dateChart=Viz.bars(ds.map(fmtS),[{name:'Average score (1–4)',color:'#126251',values:ds.map(d=>+avg(byDate[d].filter(Boolean)).toFixed(2))}]);
+  const critChart=Viz.bars(crit.map(c=>c[0]),[{name:'Average score (1–4)',color:'#3f7fb8',values:crit.map(c=>+c[1].toFixed(2))}]);
+  return '<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0">'+esc(s.name)+' <span class="muted" style="font-weight:400">'+esc(s.grade)+'</span></h3><span class="rt rt-'+scoreLabel(s.avg)+'">'+s.avg.toFixed(1)+' · '+scoreLabel(s.avg)+'</span><span class="muted">'+E.length+' entries'+(weak?' · weakest: '+weak[0]:'')+'</span><button class="btn" id="oCsv" style="margin-left:auto">⬇ Download (Excel)</button></div><div class="charts" style="margin-top:10px"><div class="panel"><h3>Average by day (last 14 days)</h3>'+dateChart+'</div><div class="panel"><h3>Average by criterion</h3>'+critChart+'</div></div>'+
+   '<div class="tablewrap"><table><thead><tr><th>Date</th><th>Period</th><th>Teacher</th>'+CRIT.map(c=>'<th>'+c[1]+'</th>').join('')+'<th>Notes</th><th></th></tr></thead><tbody>'+E.map(r=>'<tr><td>'+fmt(r.date)+'</td><td>'+esc(r.period)+'</td><td>'+esc(r.teacher)+'<br><span class="muted">'+esc(r.subject||'')+'</span></td>'+CRIT.map(([k])=>'<td>'+(r[k]?'<span class="rt rt-'+r[k]+'">'+r[k]+'</span>':'–')+(k==='r1'&&r.time?'<br><span class="muted small">'+esc(r.time)+'</span>':'')+'</td>').join('')+'<td><div class="clamp">'+esc(r.notes||'')+'</div></td><td><button class="btn danger" data-oid="'+esc(r.id)+'" title="Delete entry">🗑</button></td></tr>').join('')+'</tbody></table></div></section>';
+}
+function wireDetail(s){
+  if($('oCsv'))$('oCsv').onclick=()=>csvOut('observation-'+s.name.replace(/\W+/g,'-'),['Date','Period','Student','Class','Teacher','Subject','On time','Time','Follows instructions','Respect','Behaviour','Classwork','Notes'],s.entries.map(r=>[r.date,r.period,r.student,r.grade,r.teacher,r.subject,r.r1,r.time,r.r2,r.r3,r.r4,r.r5,r.notes]));
+  document.querySelectorAll('[data-oid]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this observation permanently?'))return;try{await FB.deleteObservation(b.dataset.oid);obs=obs.filter(x=>x.id!==b.dataset.oid);drawObs();}catch(e){toast('Could not delete ('+(e.code||e.message)+').');}});
+}
+
+/* ---------- shell ---------- */
+function draw(){
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
+  $('addBtn').hidden=tab!=='blue';
+  drawBlueLink();
+  if(tab==='blue')drawBlue();else drawObs();
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;draw();});
+$('addBtn').onclick=()=>openAdd();
+(async()=>{
+  try{
+    await FB.ready;
+    if(!FB.auth.currentUser){$('main').innerHTML='<p class="empty">Please sign in from the main page to open this dashboard.</p>';return;}
+    const me=FB.profile()||{};
+    if(!me.admin&&!(me.access||[]).includes('reports')){$('main').innerHTML='<p class="empty">You do not have access to this dashboard.</p>';$('addBtn').hidden=true;return;}
+    FB.loadRosterNames().then(r=>roster=r).catch(()=>{});
+    const busy=()=>$('dlg').open||$('cDlg').open;
+    const err=e=>{$('main').innerHTML='<p class="empty">The reports could not be loaded ('+esc(e.code||e.message)+'). If this is the first time, publish the updated database rules.</p>';};
+    FB.listenFormLinks(a=>{links=a;linkErr='';if(!busy())draw();},e=>{linkErr=e.code||e.message;draw();});
+    FB.listenBlueReports(a=>{blue=a;if(!busy())draw();},err);
+    FB.listenObservations(a=>{obs=a;if(!busy())draw();},err);
+    $('cDlg').addEventListener('close',()=>draw());$('dlg').addEventListener('close',()=>draw());
+  }catch(e){$('main').innerHTML='<p class="empty">Could not start ('+esc(e.message||e)+').</p>';}
+})();
+</script></body></html>
