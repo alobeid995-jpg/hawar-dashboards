@@ -68,8 +68,7 @@ function renderHome(){
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>show(b.dataset.open));
 }
 /* ---------------- admin ---------------- */
-const formKey=()=>{try{return localStorage.getItem('hawarFormKey')||'';}catch{return '';}};
-const rulesText=()=>{const a=(window.HAWAR_CONFIG.adminEmail||'').toLowerCase();const fk=formKey();return `rules_version = '2';
+const rulesText=()=>{const a=(window.HAWAR_CONFIG.adminEmail||'').toLowerCase();return `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
@@ -79,10 +78,16 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && area in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.access);
     }
-${fk?`    function formOk(id) {
+    function linkOk(k, t) {
+      return k is string && k.matches('[A-Za-z0-9]+') && k.size() <= 40
+        && exists(/databases/$(database)/documents/formLinks/$(k))
+        && get(/databases/$(database)/documents/formLinks/$(k)).data.active == true
+        && get(/databases/$(database)/documents/formLinks/$(k)).data.type == t;
+    }
+    function formOk(id) {
       let d = request.resource.data;
-      return d.key == '${fk}' && d.source == 'form' && d.id == id
-        && d.type in ['parent','resit']
+      return d.source == 'form' && d.id == id
+        && d.type in ['parent','resit'] && linkOk(d.key, d.type)
         && d.keys().hasOnly(['key','source','type','id','student','grade','model','teacher','date','subject','reason','approval','makeup','contact','method','outcome','createdAt'])
         && d.student is string && d.student.size() > 0 && d.student.size() <= 120
         && d.teacher is string && d.teacher.size() > 0 && d.teacher.size() <= 80
@@ -92,7 +97,7 @@ ${fk?`    function formOk(id) {
         && d.get('outcome','') is string && d.get('outcome','').size() <= 1000
         && d.get('approval','Pending') == 'Pending' && d.get('makeup','No') == 'No';
     }
-`:''}    match /users/{uid} {
+    match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow write: if isAdmin();
     }
@@ -102,7 +107,10 @@ ${fk?`    function formOk(id) {
     match /disciplineMeta/{doc} { allow read, write: if can('discipline'); }
     match /followups/{doc} {
       allow read, update, delete: if can('followups');
-      allow create: if can('followups')${fk?` || formOk(doc)`:''};
+      allow create: if can('followups') || formOk(doc);
+    }
+    match /formLinks/{k} {
+      allow read, write: if can('followups');
     }
     match /referrals/{id} {
       allow read: if can('referrals') || can('discipline');
@@ -134,24 +142,9 @@ async function renderAdmin(){
   '<div class="row"><button class="primary" id="addBtn">Create account</button><button type="button" id="genpw">Generate password</button></div><p id="addMsg" class="err"></p></form>'+
   '<div class="panel"><h3 style="margin:0">Starting data</h3><p class="muted">Load the first records once into the database (files you keep private). Existing records with the same keys are replaced.</p>'+
   '<div class="row"><label style="display:grid;gap:6px">Attendance file (attendance-seed.json)<input type="file" id="seedAtt" accept=".json"></label><label style="display:grid;gap:6px">Discipline file (discipline-seed.json)<input type="file" id="seedDis" accept=".json"></label><label style="display:grid;gap:6px">Referrals file (referrals-seed.json)<input type="file" id="seedRef" accept=".json"></label></div><p id="seedMsg" class="small"></p></div>'+
-  '<div class="panel"><h3 style="margin:0">Teacher forms (no sign-in)</h3><p class="muted">Send teachers a link; what they submit is saved straight into the Follow-Ups dashboard. Anyone with the link can submit, so only share it with teachers. To cancel old links, create a new key and publish the rules again.</p>'+
-  '<label style="display:grid;gap:6px">Form key (secret)<input id="fkey" autocomplete="off" placeholder="Click Create key, or paste the key you were given"></label>'+
-  '<div class="row"><button type="button" id="fkGen">Create key</button></div>'+
-  '<div id="flinks" class="small"></div></div>'+
+  '<div class="panel"><h3 style="margin:0">Teacher forms (no sign-in)</h3><p class="muted">Open <strong>Follow-Ups</strong>: each tab has a <em>Generate link</em> button, plus <em>Pause</em>/<em>Resume</em> to stop or restart the link at any time. Nothing else to set up here.</p></div>'+
   '<div class="panel"><h3 style="margin:0">Security rules</h3><p class="muted">Paste these into Firebase → Firestore Database → Rules → Publish. They are what really stops a user from reading a dashboard they were not given.</p><div class="mono" id="rules"></div><div class="row"><button id="copyRules">Copy rules</button></div></div>');
   $('rules').textContent=rulesText();
-  const drawLinks=()=>{
-    const k=formKey(),base=location.origin+location.pathname.replace(/[^/]*$/,'')+'form.html';
-    const mk=(t,label)=>{const u=base+'?t='+t+'&k='+encodeURIComponent(k);return '<div style="margin:8px 0"><strong>'+label+'</strong><div class="mono" style="word-break:break-all">'+esc(u)+'</div><button type="button" data-copy="'+esc(u)+'">Copy link</button></div>';};
-    $('flinks').innerHTML=k?mk('parent','Parent contact form')+mk('resit','Re-sit / make-up request form')+'<p class="muted">After creating or changing the key, copy the updated Security rules below and publish them in Firebase, otherwise the links will not work.</p>':'';
-    $('flinks').querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);b.textContent='Copied';}catch{}});
-    $('rules').textContent=rulesText();
-  };
-  $('fkey').value=formKey();
-  const setKey=v=>{try{v?localStorage.setItem('hawarFormKey',v):localStorage.removeItem('hawarFormKey');}catch{}drawLinks();};
-  $('fkey').oninput=()=>setKey($('fkey').value.trim().replace(/[^A-Za-z0-9]/g,''));
-  $('fkGen').onclick=()=>{const al='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';const r=crypto.getRandomValues(new Uint8Array(20));const k=[...r].map(x=>al[x%al.length]).join('');$('fkey').value=k;setKey(k);};
-  drawLinks();
   $('copyRules').onclick=async()=>{try{await navigator.clipboard.writeText(rulesText());$('copyRules').textContent='Copied';}catch{ }};
   $('genpw').onclick=()=>{$('np').value=genPw();};
   $('addForm').onsubmit=async e=>{

@@ -60,7 +60,7 @@ function show(){
     if(type==='resit'){rec.approval='Pending';rec.makeup='No';}
     $('send').disabled=true;$('err').textContent='';
     try{await FB.ready;await FB.submitPublic(rec);done();}
-    catch(x){$('err').textContent=/permission/.test(x.code||'')?'This link is not valid any more. Please ask the supervisor for a new link.':'Could not send ('+(x.code||x.message)+'). Check your connection and try again.';$('send').disabled=false;}
+    catch(x){$('err').textContent=/permission/.test(x.code||'')?'This form is closed or the link is no longer valid. Please ask the supervisor.':'Could not send ('+(x.code||x.message)+'). Check your connection and try again.';$('send').disabled=false;}
   });
 }
 function done(){

@@ -25,10 +25,12 @@ dialog{border:0;border-radius:18px;padding:0;width:min(680px,94vw);box-shadow:0 
 .namebox{position:relative}.suggest{position:absolute;left:0;right:0;top:100%;z-index:20;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(16,47,42,.18);max-height:240px;overflow:auto;margin-top:3px}.sg{display:flex;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #eef3f0;background:#fff;padding:9px 12px;cursor:pointer}.sg:hover{background:#eaf5ef}.sg b{flex:1;font-weight:600}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#103b33;color:#fff;border-radius:12px;padding:.7rem 1.1rem;z-index:99}
 [hidden]{display:none!important}
+.lk{display:grid;gap:10px}.lk h3{margin:0}.lkrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.lkurl{flex:1 1 100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;background:var(--light);border:1px solid var(--line);border-radius:10px;padding:.55rem .7rem;word-break:break-all;user-select:all}.pill.Active{background:#e1f3e7;color:#1d6a3a}.pill.Paused{background:#fff0d8;color:#8a5200}
 @media(max-width:760px){body{padding:14px}.charts{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.hero h1{font-size:1.5rem}}
 </style></head><body>
 <div class="hero"><div><small>Middle School · Boys Section</small><h1>Follow-Ups</h1><p>Re-sit &amp; make-up exam approvals, and the parent–teacher contact log, with charts and Excel-ready downloads.</p></div><button class="btn" id="addBtn">＋ Add entry</button></div>
 <div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="resit" aria-selected="true">Re-sit &amp; Make-up Approvals</button><button class="tab" role="tab" data-tab="parent" aria-selected="false">Parent Contacts</button></div>
+<section class="panel" id="linkPanel" style="margin-top:14px" hidden></section>
 <main id="main" aria-busy="true"><p class="empty">Loading…</p></main>
 <dialog id="dlg"><form class="dlg" id="form"></form></dialog>
 <datalist id="dlTeachers"></datalist>
@@ -121,7 +123,7 @@ const CFG={
  parent:{label:'Parent Contacts',cols:[['date','Date',r=>fmt(r.date)+'<br><span class="muted">'+dow(r.date)+'</span>'],['student','Student',r=>'<strong>'+esc(r.student)+'</strong>'+badge(r)+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['teacher','Teacher',r=>esc(r.teacher)],['contact','Contact',r=>esc(r.contact)+'<br><span class="muted">'+esc(r.method)+'</span>'],['reason','Reason for contact',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['outcome','Outcome and agreed action',r=>'<div class="clamp">'+esc(r.outcome)+'</div>']],
   csv:['date','day','student','grade','model','teacher','contact','method','reason','outcome'],csvH:['Date','Day','Student Name','Grade','Model of teaching','Teacher','Contact','Communication Method','Reason for contact','Outcome and agreed action']}
 };
-let all=[],tab='resit',filter={q:'',grade:'',extra:''},roster=[],canEdit=true,toastT,editing=null;
+let links=[],linkErr='',all=[],tab='resit',filter={q:'',grade:'',extra:''},roster=[],canEdit=true,toastT,editing=null;
 const toast=m=>{const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4000);};
 const items=()=>all.filter(r=>r.type===tab);
 const countBy=(list,f)=>{const m={};list.forEach(r=>{const k=f(r)||'Unspecified';m[k]=(m[k]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
@@ -155,7 +157,7 @@ function draw(){
    '<label>'+extraLabel+'<select id="fe"><option value="">All</option>'+extraOpts.map(g=>'<option'+(filter.extra===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'+
    '<button class="btn" id="fclear">Clear</button>'+(L.some(isNew)?'<button class="btn primary" id="seeAll">Mark all as reviewed</button>':'')+'<button class="btn" id="csv">⬇ Download (Excel)</button></div></section>'+
    '<section class="panel"><div class="tablewrap">'+(rows.length?'<table><thead><tr>'+c.cols.map(x=>'<th>'+x[1]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr class="row" data-id="'+esc(r.id)+'">'+c.cols.map(x=>'<td>'+x[2](r)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p class="empty">'+(L.length?'No entries match.':'No entries yet. Use the green button above to add the first one.')+'</p>')+'</div></section>';
-  $('main').removeAttribute('aria-busy');
+  $('main').removeAttribute('aria-busy');drawLink();
   $('fq').oninput=e=>{filter.q=e.target.value;const p=e.target.selectionStart;draw();const x=$('fq');x.focus();x.setSelectionRange(p,p);};
   $('fg').onchange=e=>{filter.grade=e.target.value;draw();};$('fe').onchange=e=>{filter.extra=e.target.value;draw();};
   $('fclear').onclick=()=>{filter={q:'',grade:'',extra:''};draw();};
@@ -209,6 +211,27 @@ $('form').addEventListener('submit',async e=>{
   finally{$('fSave').disabled=false;}
 });
 $('addBtn').onclick=()=>openForm(null);
+
+const FORMNAME={resit:'Re-sit / make-up request form',parent:'Parent contact form'};
+const curLink=t=>links.filter(l=>l.type===t).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
+const linkUrl=l=>location.origin+location.pathname.replace(/[^/]*$/,'')+'form.html?t='+l.type+'&k='+encodeURIComponent(l.key);
+function drawLink(){
+  const box=$('linkPanel');if(!canEdit){box.hidden=true;return;}
+  box.hidden=false;const l=curLink(tab),name=FORMNAME[tab];
+  if(linkErr){box.innerHTML='<div class="lk"><h3>Teacher form link</h3><p class="muted">Links could not be loaded ('+esc(linkErr)+'). Publish the latest database rules, then reload.</p></div>';return;}
+  let h='<div class="lk"><h3>Teacher form link · '+name+'</h3>';
+  if(!l){h+='<p class="muted">No link yet. Generate one and send it to teachers: they fill the form without signing in and their entry appears here.</p><div class="lkrow"><button class="btn primary" id="lkGen">Generate link</button></div>';}
+  else{
+    h+='<div class="lkrow"><span class="pill '+(l.active?'Active':'Paused')+'">'+(l.active?'Active':'Paused')+'</span><span class="muted">'+(l.active?'Anyone with this link can submit.':'Paused: nobody can open or submit through this link.')+'</span></div><div class="lkurl" id="lkUrl">'+esc(linkUrl(l))+'</div><div class="lkrow">'+
+     '<button class="btn" id="lkCopy">Copy link</button>'+(l.active?'<button class="btn" id="lkPause">Pause link</button>':'<button class="btn primary" id="lkResume">Resume link</button>')+'<button class="btn" id="lkGen">Generate new link</button></div>';
+  }
+  box.innerHTML=h+'</div>';
+  const on=(id,f)=>{if($(id))$(id).onclick=async()=>{try{await f();}catch(e){toast('Could not do that ('+(e.code||e.message)+').');}};};
+  on('lkGen',async()=>{if(l&&!confirm('Generate a new link? The current link will stop working.'))return;await FB.createFormLink(tab,links);toast('New link is ready. Copy it below.');});
+  on('lkPause',async()=>{await FB.setFormLinkActive(l.key,false);toast('Link paused.');});
+  on('lkResume',async()=>{await FB.setFormLinkActive(l.key,true);toast('Link is active again.');});
+  on('lkCopy',async()=>{try{await navigator.clipboard.writeText(linkUrl(l));toast('Link copied.');}catch{const r=document.createRange();r.selectNodeContents($('lkUrl'));const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Select and copy the link.');}});
+}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;filter={q:'',grade:'',extra:''};draw();});
 $('dlg').addEventListener('close',()=>draw());
 (async function start(){
@@ -218,6 +241,7 @@ $('dlg').addEventListener('close',()=>draw());
     const me=FB.profile()||{};
     if(!me.admin&&!(me.access||[]).includes('followups')){$('main').innerHTML='<p class="empty">You do not have access to this dashboard.</p>';$('addBtn').hidden=true;return;}
     FB.loadRosterNames().then(r=>roster=r).catch(()=>{});
+    FB.listenFormLinks(a=>{links=a;linkErr='';if(!$('dlg').open)drawLink();},e=>{linkErr=e.code||e.message;drawLink();});
     FB.listenFollowups(a=>{all=a;if($('dlg').open)return;draw();},e=>{$('main').innerHTML='<p class="empty">The follow-ups could not be loaded ('+esc(e.code||e.message)+'). If this is the first time, publish the updated database rules.</p>';});
   }catch(e){$('main').innerHTML='<p class="empty">Could not load ('+esc(e.code||e.message)+').</p>';}
 })();
