@@ -164,7 +164,7 @@ function draw(){
   $('fg').onchange=e=>{filter.grade=e.target.value;draw();};$('fe').onchange=e=>{filter.extra=e.target.value;draw();};
   $('fclear').onclick=()=>{filter={q:'',grade:'',extra:''};draw();};
   $('csv').onclick=()=>download(rows);
-  $('selAll').onclick=e=>{rows.forEach(r=>e.target.checked?picked.add(r.id):picked.delete(r.id));draw();};
+  if($('selAll'))$('selAll').onclick=e=>{rows.forEach(r=>e.target.checked?picked.add(r.id):picked.delete(r.id));draw();};
   document.querySelectorAll('.rsel').forEach(cb=>{cb.onclick=e=>{e.stopPropagation();cb.checked?picked.add(cb.dataset.id):picked.delete(cb.dataset.id);draw();};cb.parentElement.onclick=e=>e.stopPropagation();});
   if($('delSel'))$('delSel').onclick=async()=>{
     const ids=[...picked].filter(id=>all.some(x=>x.id===id));if(!ids.length)return;
