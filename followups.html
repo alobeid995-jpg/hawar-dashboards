@@ -100,7 +100,7 @@ const Viz=(()=>{
  return {pie,bars,PAL,esc};
 })();
 </script>
-<script src="config.js?v=15"></script><script src="fb.bundle.js?v=15"></script>
+<script src="config.js?v=16"></script><script src="fb.bundle.js?v=16"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -125,7 +125,7 @@ const CFG={
  parent:{label:'Parent Contacts',cols:[['date','Date',r=>fmt(r.date)+'<br><span class="muted">'+dow(r.date)+'</span>'],['student','Student',r=>'<strong>'+esc(r.student)+'</strong>'+badge(r)+'<br><span class="muted">'+esc(r.grade)+(r.model?' · '+esc(r.model):'')+'</span>'],['teacher','Teacher',r=>esc(r.teacher)],['contact','Contact',r=>esc(r.contact)+'<br><span class="muted">'+esc(r.method)+'</span>'],['reason','Reason for contact',r=>'<div class="clamp">'+esc(r.reason)+'</div>'],['outcome','Outcome and agreed action',r=>'<div class="clamp">'+esc(r.outcome)+'</div>']],
   csv:['date','day','student','grade','model','teacher','contact','method','reason','outcome'],csvH:['Date','Day','Student Name','Grade','Model of teaching','Teacher','Contact','Communication Method','Reason for contact','Outcome and agreed action']}
 };
-let teachers=[],mail={},links=[],linkErr='',all=[],tab='resit',filter={q:'',grade:'',extra:''},roster=[],canEdit=true,toastT,editing=null;
+let picked=new Set(),teachers=[],mail={},links=[],linkErr='',all=[],tab='resit',filter={q:'',grade:'',extra:''},roster=[],canEdit=true,toastT,editing=null;
 const toast=m=>{const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4000);};
 const items=()=>all.filter(r=>r.type===tab);
 const countBy=(list,f)=>{const m={};list.forEach(r=>{const k=f(r)||'Unspecified';m[k]=(m[k]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
@@ -157,13 +157,21 @@ function draw(){
    '<section class="panel" style="margin-top:14px"><div class="filters"><label>Search by student<input id="fq" type="search" value="'+esc(filter.q)+'" placeholder="Type part of the name"></label>'+
    '<label>Class<select id="fg"><option value="">All</option>'+grades.map(g=>'<option'+(filter.grade===g?' selected':'')+'>'+esc(g)+'</option>').join('')+'</select></label>'+
    '<label>'+extraLabel+'<select id="fe"><option value="">All</option>'+extraOpts.map(g=>'<option'+(filter.extra===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'+
-   '<button class="btn" id="fclear">Clear</button>'+(L.some(isNew)?'<button class="btn primary" id="seeAll">Mark all as reviewed</button>':'')+'<button class="btn" id="csv">⬇ Download (Excel)</button></div></section>'+
-   '<section class="panel"><div class="tablewrap">'+(rows.length?'<table><thead><tr>'+c.cols.map(x=>'<th>'+x[1]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr class="row" data-id="'+esc(r.id)+'">'+c.cols.map(x=>'<td>'+x[2](r)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p class="empty">'+(L.length?'No entries match.':'No entries yet. Use the green button above to add the first one.')+'</p>')+'</div></section>';
+   '<button class="btn" id="fclear">Clear</button>'+(L.some(isNew)?'<button class="btn primary" id="seeAll">Mark all as reviewed</button>':'')+(picked.size?'<button class="btn danger" id="delSel">🗑 Delete selected ('+picked.size+')</button>':'')+'<button class="btn" id="csv">⬇ Download (Excel)</button></div></section>'+
+   '<section class="panel"><div class="tablewrap">'+(rows.length?'<table><thead><tr><th style="width:34px"><input type="checkbox" id="selAll" title="Select all shown"'+(rows.length&&rows.every(r=>picked.has(r.id))?' checked':'')+'></th>'+c.cols.map(x=>'<th>'+x[1]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr class="row" data-id="'+esc(r.id)+'"><td><input type="checkbox" class="rsel" data-id="'+esc(r.id)+'"'+(picked.has(r.id)?' checked':'')+'></td>'+c.cols.map(x=>'<td>'+x[2](r)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p class="empty">'+(L.length?'No entries match.':'No entries yet. Use the green button above to add the first one.')+'</p>')+'</div></section>';
   $('main').removeAttribute('aria-busy');drawLink();
   $('fq').oninput=e=>{filter.q=e.target.value;const p=e.target.selectionStart;draw();const x=$('fq');x.focus();x.setSelectionRange(p,p);};
   $('fg').onchange=e=>{filter.grade=e.target.value;draw();};$('fe').onchange=e=>{filter.extra=e.target.value;draw();};
   $('fclear').onclick=()=>{filter={q:'',grade:'',extra:''};draw();};
   $('csv').onclick=()=>download(rows);
+  $('selAll').onclick=e=>{rows.forEach(r=>e.target.checked?picked.add(r.id):picked.delete(r.id));draw();};
+  document.querySelectorAll('.rsel').forEach(cb=>{cb.onclick=e=>{e.stopPropagation();cb.checked?picked.add(cb.dataset.id):picked.delete(cb.dataset.id);draw();};cb.parentElement.onclick=e=>e.stopPropagation();});
+  if($('delSel'))$('delSel').onclick=async()=>{
+    const ids=[...picked].filter(id=>all.some(x=>x.id===id));if(!ids.length)return;
+    if(!confirm('Delete '+ids.length+' selected '+(ids.length===1?'entry':'entries')+' permanently? This cannot be undone.'))return;
+    let ok=0,bad=0;const gone=new Set();for(const id of ids){try{await FB.deleteFollowup(id);ok++;picked.delete(id);gone.add(id);}catch(e){bad++;console.error(e);}}
+    all=all.filter(x=>!gone.has(x.id));draw();toast(bad?('Deleted '+ok+', could not delete '+bad+'.'):'Deleted '+ok+'.');
+  };
   if($('seeAll'))$('seeAll').onclick=async()=>{for(const r of L.filter(isNew))await FB.saveFollowup({...r,reviewed:true}).catch(console.error);toast('Marked as reviewed.');};
   document.querySelectorAll('tr.row').forEach(tr=>tr.onclick=()=>openForm(all.find(x=>x.id===tr.dataset.id)));
   $('dlTeachers').innerHTML=[...new Set(all.map(r=>r.teacher).concat(teachers.map(t=>t.name)).filter(Boolean))].sort().map(t=>'<option value="'+esc(t)+'">').join('');
@@ -302,7 +310,7 @@ function openMail(){
   $('mBox').querySelectorAll('[data-tdel]').forEach(b=>b.onclick=async()=>{try{await FB.deleteTeacher(b.dataset.tdel);teachers=teachers.filter(x=>x.id!==b.dataset.tdel);openMail();}catch(e){msg('Could not remove ('+(e.code||e.message)+').');}});
 }
 $('mailBtn').onclick=openMail;
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;filter={q:'',grade:'',extra:''};draw();});
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;picked.clear();filter={q:'',grade:'',extra:''};draw();});
 $('dlg').addEventListener('close',()=>draw());
 (async function start(){
   try{
