@@ -58,7 +58,7 @@ function show(k){
   document.querySelectorAll('#tabs button').forEach(b=>b.dataset.tab===k?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
   ['attendance','discipline','referrals','followups','reports'].forEach(n=>{
     const f=$('frame-'+n);f.hidden=k!==n;
-    if(k===n&&!f.getAttribute('src'))f.src=n+'.html?v=19';
+    if(k===n&&!f.getAttribute('src'))f.src=n+'.html?v=20';
   });
   $('admin').hidden=k!=='admin';$('home').hidden=k!=='home';
   if(k==='home')renderHome();
