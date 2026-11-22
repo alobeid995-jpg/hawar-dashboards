@@ -558,7 +558,8 @@ function createCell(student,d,info,now,daily){
  const select=node('select');
  select.setAttribute('aria-label',student.name+' · '+full.format(new Date(d)));
  const icons={P:'✓',A:'✕',L:'◷',EX:'○',M:'✚',OSS:'⊘'};
- select.append(option('','— Select status'),...entries.map(([code,label])=>option(code,daily?icons[code]+'  '+label:label+' ('+code+')')));
+ if(!current&&pending)select.append(option('','— Select status'));
+ select.append(...entries.map(([code,label])=>option(code,daily?icons[code]+'  '+label:label+' ('+code+')')));
  if(current&&!Object.hasOwn(codes,current))select.append(option(current,current+' · Source code'));
  if(pending&&!current)select.append(option('review','Confirm imported '+(codes[pending]||pending)));
  select.value=current;
@@ -591,8 +592,22 @@ function visibleStudents(matches,columns,status,now){
  return matches.filter(s=>!status||columns.some(([d,info])=>info.style==='school'&&
   (status==='review'?!!state.pending[d]?.[s.id]&&!state.marks[d]?.[s.id]:d<=now&&state.marks[d]?.[s.id]===status)));
 }
+function applyDefaults(all,columns,now){
+ /* Everyone is Present by default: on every school day up to today, a student with no recorded status (and no pending import) is saved as Present. Absent / Late etc. are then set by hand. */
+ let marks=null;
+ for(const [d,info] of columns){
+  if(info.style!=='school'||d>now)continue;
+  for(const s of all){
+   if(state.marks[d]?.[s.id]||state.pending[d]?.[s.id])continue;
+   marks=marks||{...state.marks};
+   marks[d]={...(marks[d]||{}),[s.id]:'P'};
+  }
+ }
+ if(marks)save({...state,marks});
+}
 function renderSheet(autoSelect=false){
  const all=roster(month);
+ applyDefaults(all,activeColumns(),today());
  const daily=isDaily();
  el('grid').classList.toggle('daily',daily);
  const search=normalize(el('search').value);
