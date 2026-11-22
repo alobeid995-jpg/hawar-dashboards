@@ -99,7 +99,24 @@ body.embedded .hero{margin-top:0}
 .range-grid th:first-child{min-width:190px}.range-grid .rname{font-weight:600}.range-grid tfoot th,.range-grid tfoot td{position:sticky;bottom:0;background:#e9f5ee;z-index:2;font-weight:700}.range-grid tfoot th:first-child{z-index:3}
 #range-toggle{background:#fff;border-color:#126251;color:#126251;font-weight:600}#range-toggle[aria-expanded=true]{background:#126251;color:#fff}
 @media print{body.print-range header,body.print-range .filters,body.print-range #analytics-panel,body.print-range .sheet,body.print-range #profile,body.print-range .range-tools,body.print-range #message{display:none!important}body.print-range .range-grid{max-height:none;overflow:visible}body.print-range .rangepanel{border:0;padding:0}}
-</style><script src="config.js?v=21"></script><script src="fb.bundle.js?v=21"></script>
+
+.print-head{display:none}
+#analytics-pdf{background:#fff;border-color:#126251;color:#126251;font-weight:600}#analytics-pdf:hover{background:#e9f5ee}
+@media print{
+ @page{size:A4 portrait;margin:11mm}
+ body.print-analytics,body.print-analytics *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ html:has(body.print-analytics),body.print-analytics{background:#fff!important}
+ body.print-analytics>*:not(main):not(script),body.print-analytics main>*:not(#analytics-panel),body.print-analytics .filters,body.print-analytics dialog,body.print-analytics #message,body.print-analytics #analytics-pdf,body.print-analytics #trend-period,body.print-analytics .chartcard label{display:none!important}
+ body.print-analytics main{width:100%!important;margin:0!important;padding:0!important}
+ body.print-analytics #analytics-panel{display:block!important;border:0;padding:0;margin:0;box-shadow:none}
+ body.print-analytics .print-head{display:block;border-bottom:3px solid #126251;padding-bottom:6px;margin-bottom:10px;color:#126251;font-size:13px}
+ body.print-analytics .analytics .heading{margin-bottom:4px}
+ body.print-analytics #section-chart,body.print-analytics #trend-chart,body.print-analytics #status-chart{max-height:none!important;overflow:visible!important}
+ body.print-analytics .chartcard,body.print-analytics .metrics>div,body.print-analytics .viz-pair>div{break-inside:avoid;page-break-inside:avoid}
+ body.print-analytics .chartcard{margin-top:10px;padding:12px}
+ body.print-analytics .viz-pair{grid-template-columns:1fr 1fr!important}
+}
+</style><script src="config.js?v=22"></script><script src="fb.bundle.js?v=22"></script>
 </head>
 <body>
 <header><div class="wrap top hero">
@@ -165,7 +182,8 @@ body.embedded .hero{margin-top:0}
     <div id="range-grid" class="grid range-grid"><table><thead id="range-head"></thead><tbody id="range-body"></tbody><tfoot id="range-foot"></tfoot></table></div>
   </section>
   <section id="analytics-panel" class="analytics" aria-labelledby="analytics-title" hidden>
-    <div class="heading"><h2 id="analytics-title">Attendance Analysis</h2><span id="analytics-scope"></span></div>
+    <div class="print-head"><strong>Hawar International School</strong> · Middle School Boys Section<br><span id="print-date"></span></div>
+    <div class="heading"><h2 id="analytics-title">Attendance Analysis</h2><span id="analytics-scope"></span><button id="analytics-pdf" type="button">⬇ Download PDF</button></div>
     <div class="metrics">
       <div><span>Attendance rate</span><strong id="present-rate"></strong><small id="present-count"></small></div>
       <div><span>Absence rate</span><strong id="absence-rate"></strong><small id="absence-count"></small></div>
@@ -698,6 +716,17 @@ el('group').onchange=()=>{refreshFilters();renderSheet(true);};
 el('search').oninput=()=>renderSheet(true);
 el('status').onchange=()=>renderSheet();
 el('trend-period').onchange=renderTrend;
+el('analytics-pdf').onclick=()=>{
+ refreshRates();
+ const scope=el('analytics-scope').textContent.trim();
+ el('print-date').textContent='Generated '+new Intl.DateTimeFormat('en-GB',{dateStyle:'long',timeZone:'Asia/Bahrain'}).format(new Date())+(scope?' · '+scope:'');
+ const old=document.title,name='Attendance Analysis'+(scope?' - '+scope:'')+' - '+today();
+ document.title=name;try{if(parent&&parent!==window)parent.document.title=name;}catch{}
+ document.body.classList.add('print-analytics');
+ const done=()=>{document.body.classList.remove('print-analytics');document.title=old;};
+ window.addEventListener('afterprint',done,{once:true});
+ window.print();
+};
 el('analytics-toggle').onclick=()=>{
  const panel=el('analytics-panel');
  panel.hidden=!panel.hidden;
