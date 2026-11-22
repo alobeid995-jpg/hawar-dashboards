@@ -99,7 +99,7 @@ body.embedded .hero{margin-top:0}
 .range-grid th:first-child{min-width:190px}.range-grid .rname{font-weight:600}.range-grid tfoot th,.range-grid tfoot td{position:sticky;bottom:0;background:#e9f5ee;z-index:2;font-weight:700}.range-grid tfoot th:first-child{z-index:3}
 #range-toggle{background:#fff;border-color:#126251;color:#126251;font-weight:600}#range-toggle[aria-expanded=true]{background:#126251;color:#fff}
 @media print{body.print-range header,body.print-range .filters,body.print-range #analytics-panel,body.print-range .sheet,body.print-range #profile,body.print-range .range-tools,body.print-range #message{display:none!important}body.print-range .range-grid{max-height:none;overflow:visible}body.print-range .rangepanel{border:0;padding:0}}
-</style><script src="config.js?v=20"></script><script src="fb.bundle.js?v=20"></script>
+</style><script src="config.js?v=21"></script><script src="fb.bundle.js?v=21"></script>
 </head>
 <body>
 <header><div class="wrap top hero">
@@ -593,17 +593,19 @@ function visibleStudents(matches,columns,status,now){
   (status==='review'?!!state.pending[d]?.[s.id]&&!state.marks[d]?.[s.id]:d<=now&&state.marks[d]?.[s.id]===status)));
 }
 function applyDefaults(all,columns,now){
- /* Everyone is Present by default: on every school day up to today, a student with no recorded status (and no pending import) is saved as Present. Absent / Late etc. are then set by hand. */
- let marks=null;
+ /* Everyone is Present by default on every school day up to today. An imported entry that is waiting for confirmation is confirmed as imported (so an imported Absent stays Absent); anyone else with no status is saved as Present. Absent / Late etc. are then set by hand. */
+ let marks=null,pend=null;
  for(const [d,info] of columns){
   if(info.style!=='school'||d>now)continue;
   for(const s of all){
-   if(state.marks[d]?.[s.id]||state.pending[d]?.[s.id])continue;
+   if(state.marks[d]?.[s.id])continue;
+   const pc=state.pending[d]?.[s.id];
    marks=marks||{...state.marks};
-   marks[d]={...(marks[d]||{}),[s.id]:'P'};
+   marks[d]={...(marks[d]||{}),[s.id]:pc||'P'};
+   if(pc){pend=pend||{...state.pending};const r={...pend[d]};delete r[s.id];pend[d]=r;}
   }
  }
- if(marks)save({...state,marks});
+ if(marks)save({...state,marks,pending:pend||state.pending});
 }
 function renderSheet(autoSelect=false){
  const all=roster(month);
