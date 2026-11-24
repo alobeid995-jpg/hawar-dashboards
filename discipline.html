@@ -14,9 +14,33 @@ html.embed header{height:56px}
 .charts .panel .viz-pie{margin:14px 0 6px}.charts .panel.wide{grid-column:1/-1}.charts .panel .viz-pie svg{width:164px;height:164px}
 .charts .panel .bar-row:first-of-type{margin-top:18px}
 @media(max-width:760px){html.embed aside{padding:6px 12px}}
-</style><script>if(window.top!==window.self)document.documentElement.classList.add('embed')</script><script src="config.js?v=17"></script><script src="fb.bundle.js?v=17"></script><style>.namebox{position:relative}.suggest{position:absolute;left:0;width:max(100%,380px);max-width:86vw;top:100%;z-index:30;background:#fff;border:1px solid var(--line,#cfe3d6);border-radius:12px;box-shadow:0 10px 28px rgba(16,47,42,.18);max-height:320px;overflow:auto;margin-top:4px}.sg-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #eef3f0;border-radius:0;background:#fff;padding:10px 12px;min-height:0;cursor:pointer}.sg-item:hover,.sg-item:focus{background:#eaf5ef}.sg-item strong{flex:1;white-space:normal;text-align:left;font-size:.92rem;color:#102f2a}.sg-item .muted,.sg-item .pill{white-space:nowrap;flex:none}.sg-empty{padding:12px;color:#5b6b64}.selbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#eaf5ef;border-radius:12px;padding:10px 14px;margin:0 0 10px}.selbar strong{font-size:1.05rem}.selbar button{margin-left:auto}</style></head><body>
+</style><script>if(window.top!==window.self)document.documentElement.classList.add('embed')</script><script src="config.js?v=24"></script><script src="fb.bundle.js?v=24"></script><style>.namebox{position:relative}.suggest{position:absolute;left:0;width:max(100%,380px);max-width:86vw;top:100%;z-index:30;background:#fff;border:1px solid var(--line,#cfe3d6);border-radius:12px;box-shadow:0 10px 28px rgba(16,47,42,.18);max-height:320px;overflow:auto;margin-top:4px}.sg-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #eef3f0;border-radius:0;background:#fff;padding:10px 12px;min-height:0;cursor:pointer}.sg-item:hover,.sg-item:focus{background:#eaf5ef}.sg-item strong{flex:1;white-space:normal;text-align:left;font-size:.92rem;color:#102f2a}.sg-item .muted,.sg-item .pill{white-space:nowrap;flex:none}.sg-empty{padding:12px;color:#5b6b64}.selbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#eaf5ef;border-radius:12px;padding:10px 14px;margin:0 0 10px}.selbar strong{font-size:1.05rem}.selbar button{margin-left:auto}</style></head><body>
 <aside><div class="brand"><span class="logo" aria-hidden="true">✓</span><div><strong>Hawar International School</strong><small>Middle School Student Affairs</small></div></div><nav aria-label="Dashboard navigation"><button data-tab="home">Overview</button><button data-tab="log">Incident Log</button><button data-tab="week">Weekly Summary</button></nav><small class="local">Edits and imports are saved to the shared database.</small></aside>
 <div class="shell"><header><span>Behavior and Discipline Dashboard</span><button id="importOpen">Import Excel</button></header><main><div id="content" aria-busy="true">Loading incident records…</div></main></div>
+<style>
+#printArea{display:none}
+.rp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:3px solid #126251;padding-bottom:8px;margin-bottom:6px;color:#126251}
+.rp-title{font-size:1.35rem;font-weight:700;text-align:right}.rp-sub{font-size:.82rem;color:#4e6072;margin:0 0 12px}
+.rp-box{border:1px solid #d5e2db;border-radius:12px;padding:12px 14px;margin:0 0 12px;background:#fff}
+.rp-box h3{margin:0 0 8px;font-size:1rem;color:#126251}
+.rp-grid{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:.92rem}.rp-grid dt{color:#4e6072;font-weight:600}.rp-grid dd{margin:0}
+.rp-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 12px}.rp-tile{border:1px solid #d5e2db;background:#f4faf6;border-radius:12px;padding:10px 12px}.rp-tile strong{display:block;font-size:1.5rem;color:#126251}.rp-tile span{font-size:.8rem;color:#4e6072}
+.rp-table{width:100%;border-collapse:collapse;font-size:.82rem}.rp-table th{background:#e9f5ee;color:#126251;text-align:left;padding:6px 7px;border-bottom:2px solid #126251}.rp-table td{padding:6px 7px;border-bottom:1px solid #e3ece7;vertical-align:top}
+.rp-sign{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:34px;font-size:.82rem;color:#4e6072}.rp-sign div{border-top:1px solid #4e6072;padding-top:4px}
+@media print{
+ @page{size:A4 portrait;margin:11mm}
+ body.print-rep,body.print-rep *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ html:has(body.print-rep),body.print-rep{background:#fff!important}
+ body.print-rep{display:block!important;width:auto!important;margin:0!important;padding:0!important;min-height:0!important}
+ body.print-rep #printArea{width:100%!important;max-width:none!important}
+ body.print-rep>*:not(#printArea):not(script):not(style){display:none!important}
+ body.print-rep #printArea{display:block!important;padding:0;margin:0}
+ body.print-rep .rp-box,body.print-rep .rp-tile,body.print-rep .panel,body.print-rep tr{break-inside:avoid;page-break-inside:avoid}
+ body.print-rep .charts{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;margin:0 0 12px}
+ body.print-rep .charts .panel.wide{grid-column:1/-1}
+ body.print-rep .viz-pair{grid-template-columns:1fr 1fr!important}
+}
+</style><div id="printArea"></div>
 <dialog id="editor" aria-labelledby="editTitle"><form id="recordForm"><div class="dialog-head"><h2 id="editTitle"></h2><button type="button" data-close="editor" aria-label="Close">✕</button></div><div id="recordFields" class="form-grid"></div><div class="actions"><button class="primary">Save Incident</button><button type="button" data-close="editor">Cancel</button></div></form></dialog>
 <dialog id="importer" aria-labelledby="importTitle"><form id="importForm"><div class="dialog-head"><h2 id="importTitle">Import Behavior Records</h2><button type="button" data-close="importer" aria-label="Close">✕</button></div><p class="muted">To load names, choose the original workbook or a separate Excel file with a Student Name, Full Name or Name column, then select Update Dropdowns. Your existing records and edits are kept. Replace Records and Import requires a Behavior Record sheet. Names are processed in this browser.</p><label class="field">Excel workbook<input id="workbook" type="file" accept=".xlsx" required></label><div class="actions"><button class="primary" id="updateDropdowns">Update Dropdowns</button><button id="importSubmit">Replace Records and Import</button><button type="button" data-close="importer">Cancel</button></div><p id="importError" role="alert"></p></form></dialog>
 <dialog id="referDlg" style="border:0;border-radius:18px;padding:0;width:min(560px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.35)"><form id="referForm" style="padding:20px 22px;display:grid;gap:12px"><h2 style="margin:0" id="referTitle">Refer to counselor</h2><p class="muted" style="margin:0" id="referSub"></p>
@@ -909,9 +933,46 @@ function table() {
     return '<div class="empty" role="status"><h3>No matching records</h3><p class="muted">'+message+'</p>'+link+'</div>';
   }
   const selS=selectedStudent();
-  return (selS?'<div class="selbar"><strong>'+esc(selS.name)+'</strong>'+(selS.group?'<span class="muted">'+esc(selS.group)+'</span>':'')+btn('+ Add incident for this student','new-for','primary')+'</div>':'')+'<p class="text-count muted" aria-live="polite">'+(()=>{const o=rows.filter(isOtherParty).length;return o?n.format(rows.length-o)+' incidents + '+n.format(o)+' as other party':n.format(rows.length)+' records';})()+'</p><div class="table-wrap" tabindex="0" aria-label="Incident records table"><table class="wide-table"><thead><tr><th>Date</th><th>Student and Section</th><th>Infraction</th><th>School Action</th><th>Record</th></tr></thead><tbody>'+
+  return (selS?'<div class="selbar"><strong>'+esc(selS.name)+'</strong>'+(selS.group?'<span class="muted">'+esc(selS.group)+'</span>':'')+btn('📄 Full student report','student-report')+btn('+ Add incident for this student','new-for','primary')+'</div>':'')+'<p class="text-count muted" aria-live="polite">'+(()=>{const o=rows.filter(isOtherParty).length;return o?n.format(rows.length-o)+' incidents + '+n.format(o)+' as other party':n.format(rows.length)+' records';})()+'</p><div class="table-wrap" tabindex="0" aria-label="Incident records table"><table class="wide-table"><thead><tr><th>Date</th><th>Student and Section</th><th>Infraction</th><th>School Action</th><th>Record</th></tr></thead><tbody>'+
     rows.map(r=>'<tr><td><time>'+showDate(r.date)+'</time></td><td><strong>'+esc(displayName(r.name)||'Unspecified')+'</strong><br><span class="muted">'+esc(r.grade||'Unspecified')+'</span>'+(isOtherParty(r)?'<br><span class="pill">Involved as other party · '+esc(displayName(r.involved))+'</span>':'')+'</td><td>'+esc(translate(r.violation))+'</td><td>'+esc(translate(r.action))+
-      (needsData(r).length?'<br><span class="pill amber">'+n.format(needsData(r).length)+' fields missing</span>':'')+'</td><td>'+btn('View and Edit','edit:'+r.id)+' '+btn('Refer to counselor','refer:'+r.id)+'</td></tr>').join('')+'</tbody></table></div>';
+      (needsData(r).length?'<br><span class="pill amber">'+n.format(needsData(r).length)+' fields missing</span>':'')+'</td><td>'+btn('View and Edit','edit:'+r.id)+' '+btn('Refer to counselor','refer:'+r.id)+' '+btn('Print report','print:'+r.id)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+function repHead(title){return '<div class="rp-head"><div><strong>Hawar International School</strong><br>Middle School Boys Section</div><div class="rp-title">'+esc(title)+'</div></div><p class="rp-sub">Generated '+new Intl.DateTimeFormat('en-GB',{dateStyle:'long',timeZone:'Asia/Bahrain'}).format(new Date())+' · Confidential student record</p>';}
+function printOut(html,title){
+  const area=$('printArea');area.innerHTML=html;
+  const old=document.title;document.title=title;try{if(parent&&parent!==window)parent.document.title=title;}catch{}
+  document.body.classList.add('print-rep');
+  const done=()=>{document.body.classList.remove('print-rep');area.innerHTML='';document.title=old;};
+  addEventListener('afterprint',done,{once:true});
+  window.print();
+}
+const ownRows=key=>records.filter(r=>searchText(fullName(r.name))===key);
+function printIncident(r){
+  const nm=displayName(r.name)||'Unspecified',key=searchText(fullName(r.name)),total=key?ownRows(key).length:0;
+  const row=(l,v)=>'<dt>'+l+'</dt><dd>'+(v?esc(v):'—')+'</dd>';
+  const html=repHead('Behavior Incident Report')+
+   '<div class="rp-box"><h3>Student</h3><dl class="rp-grid">'+row('Name',nm)+row('Grade and section',r.grade)+row('Student ID',r.sid||rosterId(r.name))+row('Teaching model',r.model)+'</dl></div>'+
+   '<div class="rp-box"><h3>Incident details</h3><dl class="rp-grid">'+row('Date',showDate(r.date))+row('Period',translate(r.period))+row('Location',translate(r.place))+row('Infraction',translate(r.violation))+row('Reported by',r.reporter)+row('School action',translate(r.action))+'</dl></div>'+
+   (r.involved?'<div class="rp-box"><h3>Other party</h3><dl class="rp-grid">'+row('Name',displayName(r.involved))+row('Grade and section',r.igrade)+row('Teaching model',r.imodel)+'</dl></div>':'')+
+   (total?'<div class="rp-box"><h3>Record this school year</h3><p style="margin:0">'+n.format(total)+' incident'+(total===1?'':'s')+' recorded for this student, including this one.</p></div>':'')+
+   '<div class="rp-sign"><div>Supervisor</div><div>Parent / guardian</div><div>Date</div></div>';
+  printOut(html,'Incident Report - '+nm+' - '+(r.date||today));
+}
+function printStudentReport(p){
+  const mine=ownRows(p.key).sort((a,b)=>(a.date||'').localeCompare(b.date||'')),other=records.filter(r=>searchText(fullName(r.name))!==p.key&&searchText(fullName(r.involved))===p.key).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const dated=mine.filter(r=>r.date),first=dated[0]?.date,last=dated[dated.length-1]?.date;
+  const top=counts(mine,r=>translate(r.violation))[0];
+  const tile=(l,v)=>'<div class="rp-tile"><strong>'+esc(v)+'</strong><span>'+l+'</span></div>';
+  const cell=r=>'<tr><td>'+showDate(r.date)+'</td><td>'+esc(translate(r.period))+'</td><td>'+esc(translate(r.place))+'</td><td>'+esc(translate(r.violation))+'</td><td>'+esc(translate(r.action))+'</td><td>'+esc(r.reporter||'—')+'</td></tr>';
+  const table=(rows,head)=>'<div class="rp-box"><h3>'+head+'</h3><table class="rp-table"><thead><tr><th>Date</th><th>Period</th><th>Location</th><th>Infraction</th><th>School action</th><th>Reported by</th></tr></thead><tbody>'+rows.map(cell).join('')+'</tbody></table></div>';
+  const html=repHead('Student Behavior Report')+
+   '<div class="rp-box"><h3>Student</h3><dl class="rp-grid"><dt>Name</dt><dd>'+esc(p.name)+'</dd><dt>Grade and section</dt><dd>'+esc(p.group||mine[0]?.grade||'—')+'</dd><dt>Period covered</dt><dd>From the start of the school year'+(first?' · first incident '+showDate(first):'')+' · to '+showDate(today)+'</dd></dl></div>'+
+   '<div class="rp-tiles">'+tile('Incidents this year',n.format(mine.length))+tile('Involved as other party',n.format(other.length))+tile('Latest incident',last?showDate(last):'—')+tile('Most frequent infraction',top&&top[1]?top[0]+' ('+top[1]+')':'—')+'</div>'+
+   (mine.length?table(mine,'All incidents this school year'):'<div class="rp-box"><p style="margin:0">No incidents recorded for this student.</p></div>')+
+   (other.length?table(other,'Involved as the other party'):'')+
+   (mine.length?'<section class="charts">'+chart('Incidents by Infraction',counts(mine,r=>translate(r.violation)))+chart('Incidents by School Action',counts(mine,r=>translate(r.action),[disciplineCommittee]))+chart('Incidents by Location',counts(mine,r=>translate(r.place)))+monthChart(mine)+'</section>':'')+
+   '<div class="rp-sign"><div>Supervisor</div><div>Parent / guardian</div><div>Date</div></div>';
+  printOut(html,'Student Behavior Report - '+p.name+' - '+today);
 }
 function summary() {
   const from=startOfWeek(weekDay), to=endOfWeek(weekDay);
@@ -1188,6 +1249,8 @@ document.addEventListener('click',async event=>{
   const action=button.dataset.act||'';
   if(action==='new')editor();
   if(action.startsWith('refer:')){const r=records.find(x=>x.id===action.slice(6));if(r)openRefer(r);}
+  if(action.startsWith('print:')){const r=records.find(x=>x.id===action.slice(6));if(r)printIncident(r);}
+  if(action==='student-report'){const p=selectedStudent();if(p)printStudentReport(p);}
   if(action==='new-for'){const p=selectedStudent();editor(null,p);}
   if(action.startsWith('edit:'))editor(records.find(r=>r.id===action.slice(5)));
   if(action==='search')submitNameSearch();
